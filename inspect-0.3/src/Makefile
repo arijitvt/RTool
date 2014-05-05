@@ -4,7 +4,7 @@
 CC  = gcc
 CXX = g++
 
-YICES_PATH = $(shell cd ../../yices-1.0.28; pwd)
+YICES_PATH = $(shell cd ../../yices-1.0.39; pwd)
 SMTDP_PATH = $(shell cd ../../smt_dp ; pwd)
 
 AC_FLAGS = -DRSS_EXTENSION=1 -I$(YICES_PATH)/include -I$(SMTDP_PATH) -DDAIKON
