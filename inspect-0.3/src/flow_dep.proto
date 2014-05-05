@@ -1,0 +1,11 @@
+package flow_dep;
+
+message LoadStoreInfo_Proto {
+  required int32 tid = 1;
+  required int64 val = 2;
+  required bool is_load = 3;
+}
+
+message ExecInfo_Proto {
+  repeated LoadStoreInfo_Proto info = 1;
+}
