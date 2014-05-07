@@ -1,4 +1,5 @@
-#Details of the installation process.
+#
+etails of the installation process.
 RTool is based on the  LLVM based front-end, which is written on llvm-3.2,
 an intelligent scheduler(inspect-0.3, a thread modular parser(SimpleDeclParser) and 
 dynamic invariant generation tool(daikon).
@@ -15,6 +16,6 @@ Installation process consits of the following major steps.
 	9. Modify and install the path in the runner scripts.
 
 
-##Checkout the git repository
+## 1. Checkout the git repository
 Checkout the git repository into a local folder by using the following command,
 git clone `git@github.com:arijitvt/RTool.git`
