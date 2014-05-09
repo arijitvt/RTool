@@ -23,6 +23,7 @@ signals:
         void finished();
 
 public slots:
+    void compile();
     void execute();
 
 };

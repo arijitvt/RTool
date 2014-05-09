@@ -29,15 +29,16 @@ private:
     QButtonGroup *radioGroupBox;
     //PythonInterface *pyInterface;
     int choice;
+    int algoSelect;
 
 
-public slots:
-    void close();
+public slots:    
     void radioClicked(int);
-    void generateInvs();
-    void invariantGenerationFinished();
-    void enableWindow();
-    void disableWindow();
-};
+    void generateTrace();
+    void traceGenerationFinished();
+    void generateInvariantSlot();
+    void updateAlgoSelect(int);
+
+ };
 
 #endif // MAINWINDOW_H

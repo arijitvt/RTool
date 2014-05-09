@@ -11,3 +11,8 @@ void PythonInterface::execute() {
     system(command_string.c_str());
     emit finished();
 }
+
+
+void PythonInterface::compile() {
+
+}
