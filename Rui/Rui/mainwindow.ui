@@ -121,11 +121,18 @@
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <layout class="QHBoxLayout" name="updatePPTLayout">
       <item>
        <widget class="QPushButton" name="updatePPTButton">
         <property name="text">
          <string>Update PPT</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="updateSrcButton">
+        <property name="text">
+         <string>Update Source</string>
         </property>
        </widget>
       </item>
@@ -168,20 +175,30 @@
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QLineEdit" name="lineEdit"/>
+            <widget class="QLineEdit" name="runCount"/>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="label_3">
+            <widget class="QLabel" name="spacerCntLbl">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>Spacer Count</string>
              </property>
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QLineEdit" name="lineEdit_2"/>
+            <widget class="QLineEdit" name="spacerCnt">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+            </widget>
            </item>
            <item row="2" column="0">
-            <widget class="QLabel" name="label_4">
+            <widget class="QLabel" name="algoComboLbl">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>Exploraton Algorithm</string>
              </property>
@@ -189,6 +206,9 @@
            </item>
            <item row="2" column="1">
             <widget class="QComboBox" name="algoCombo">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <item>
               <property name="text">
                <string>DPOR</string>
@@ -254,6 +274,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="genInvButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string>Generate Invariant</string>
            </property>

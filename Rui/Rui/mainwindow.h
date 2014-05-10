@@ -34,10 +34,13 @@ private:
 
 public slots:    
     void radioClicked(int);
+    void compile();
     void generateTrace();
+    void compilationFinished();
     void traceGenerationFinished();
     void generateInvariantSlot();
     void updateAlgoSelect(int);
+    void displayInvariants();
 
  };
 
