@@ -107,7 +107,7 @@ def main_daikon() :
 #This is r_tool runner script
 
 def runner():
-	command_string = "runner.py run";
+	command_string = "runner_ui.py run";
 	os.system(command_string);
 	return;
 
@@ -129,8 +129,10 @@ def compiling() :
 	os.system(command_string);
 	return ;
 
-def load_and_run():
-	command_string = "runner_ui.py load_only"
+def load_and_run(algo_choice,count,arg):
+        #Choice--PCB/HaPSet Count--Argument
+	command_string = "runner_ui.py load_only "+str(algo_choice)+" "+str(count)+" "+arg;
+        print "The command is "+command_string;
 	os.system(command_string);
 	return ;
 
@@ -171,9 +173,11 @@ def main_rtool():
 		compiling();
 
 	elif sys.argv[2] == "run" :
-		assert len(sys.argv) == 3;
-		counter =  sys.argv[2];
-		load_and_run();
+		counter =  sys.argv[3];
+                algorithm_choice = sys.argv[4];
+                alg_cnt=sys.argv[5];
+                arg="  ";
+		load_and_run(algorithm_choice,alg_cnt,arg);
 		dtrace_manip(counter);
 
 	elif sys.argv[2] == "clean":
