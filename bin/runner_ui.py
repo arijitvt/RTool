@@ -4,7 +4,7 @@ import os;
 import sys;
 import shutil;
 
-rtool = "r_tool.py"
+rtool = "r_tool_ui.py"
 java  = "java"
 blank = " "
 
@@ -79,27 +79,6 @@ def only_parser():
 	os.system(command_string);
 	os.chdir("../");
 
-#def do_intelligent_run():
-#           counter= 0;
-#
-#	   #Create the output directory
-#	   output_dir = "result";
-#	   if not os.path.exists(output_dir) :
-#		   os.mkdir(output_dir);
-#
-#	   #generate the ppts
-#	   gen_ppts();
-#
-#	   for i in range(0,5) : 
-#		   do_instrumentation_sp(i);
-#		   runner();
-#		   parser();
-#		   assert os.path.exists("tr_gen/daikon_result");
-#		   assert os.path.exists("result");
-#		   output_file_name = "daikon_result_"+str(i);
-#		   shutil.copy("tr_gen/daikon_result","result/"+output_file_name);
-#	
-#	   return ;
 	   
 
 		

@@ -49,8 +49,8 @@ link_flags = " -linspect -lpthread -lrt -lm -lstdc++ ";
 clang_generic_flag = "-S -emit-llvm -g";   
 
 clap_opt_flag  = " -basicaa -tap_inst_number -tap_pthreads -tap_mem"
-hook_file_path = "/home/ari/cvs/src/llvm-3.2.src/lib/Transforms/Daikon/hook.c"
-daikon_src_path = "/home/ari/cvs/src/llvm-3.2.src/lib/Transforms/Daikon/"
+daikon_src_path = os.environ.get("daikon");
+hook_file_path = daikon_src_path+"hook.c"
 
 
 
@@ -153,8 +153,8 @@ def compile_all_files(src,sp):
 
 		        temp_file_list.append(output_file);
 
-        shutil.copy(daikon_src_path+"hook.h",".");
-        shutil.copy(daikon_src_path+"hook.c",".");
+        shutil.copy(daikon_src_path+"/hook.h",".");
+        shutil.copy(daikon_src_path+"/hook.c",".");
         output_file = compile_by_clang("hook.c","hook")
         output_file = do_final_llvm_linking(" *.5.o ",output_file);
 	temp_file_list.append(output_file);

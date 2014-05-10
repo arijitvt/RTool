@@ -125,17 +125,17 @@ def dtrace_manip(counter):
 	return 
 
 def compiling() :
-	command_string = "runner.py comp"
+	command_string = "runner_ui.py comp"
 	os.system(command_string);
 	return ;
 
 def load_and_run():
-	command_string = "runner.py load_only"
+	command_string = "runner_ui.py load_only"
 	os.system(command_string);
 	return ;
 
 def tr_clean() :
-	command_string = "runner.py clean"
+	command_string = "runner_ui.py clean"
 	os.system(command_string);
 	return ;
 
