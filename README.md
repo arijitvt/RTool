@@ -7,14 +7,14 @@ dynamic invariant generation tool(daikon).
 #Installation Process
 ------------------------------------------
 Installation process consits of the following major steps.
-	1. Checkout the git repository.
-	2. Uncompress and install llvm from the llvm-3.2.src
-	3. Install the Daikon Pass.
-	5. Install smtdp.
-	6. Install inspect.
-	7. Install Thread Modular Parser.
-	8. Install Daikon.
-	9. Modify and install the path in the runner scripts.
+1. Checkout the git repository.
+2. Uncompress and install llvm from the llvm-3.2.src
+3. Install the Daikon Pass.
+5. Install smtdp.
+6. Install inspect.
+7. Install Thread Modular Parser.
+8. Install Daikon.
+9. Modify and install the path in the runner scripts.
 
 
 ## 1. Checkout the git repository
