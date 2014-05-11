@@ -42,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->runButton,SIGNAL(clicked()),this,SLOT(generateTrace()));
     connect(ui->genInvButton,SIGNAL(clicked()),this,SLOT(generateInvariantSlot()));
     connect(ui->algoCombo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateAlgoSelect(int)));
+    connect(ui->updatePPTButton,SIGNAL(clicked()),this,SLOT(updatePPTSlot()));
+    connect(ui->updateSrcButton,SIGNAL(clicked()),this,SLOT(updateSRCSlot()));
 }
 
 MainWindow::~MainWindow()
@@ -90,8 +92,8 @@ void MainWindow::compilationFinished() {
         ui->algoComboLbl->setEnabled(true);
         ui->algoCombo->setEnabled(true);
 
-        ui->algoCountLbl->setEnabled(true);
-        ui->algoCount->setEnabled(true);
+      //  ui->algoCountLbl->setEnabled(true);
+        //ui->algoCount->setEnabled(true);
 
         break;
 
@@ -105,8 +107,8 @@ void MainWindow::compilationFinished() {
         ui->algoComboLbl->setEnabled(true);
         ui->algoCombo->setEnabled(true);
 
-        ui->algoCountLbl->setEnabled(true);
-        ui->algoCount->setEnabled(true);
+       // ui->algoCountLbl->setEnabled(true);
+        //ui->algoCount->setEnabled(true);
         break;
 
     }
@@ -144,6 +146,12 @@ void MainWindow::generateTrace(){
             pyInterface->setAlgoCount(ui->algoCount->text().toInt());
         }else {
             pyInterface->setAlgoCount(0);
+        }
+
+        if(choice == 2) {
+            pyInterface->setSpCount(ui->spacerCnt->text().toInt());
+        }else {
+            pyInterface->setSpCount(0);
         }
     }
 
@@ -183,7 +191,6 @@ void MainWindow::generateInvariantSlot() {
 
     thread->start();
 
-
 }
 
 void MainWindow::displayInvariants() {
@@ -217,6 +224,84 @@ void MainWindow::displayInvariants() {
 }
 
 
+void MainWindow::updatePPTSlot() {
+    cout<<"Update PPT Slot is getting called"<<endl;
+    QString fileName("ProgramPoints.ppts");
+    QDialog *dailogBox = new QDialog(this);
+    QVBoxLayout *boxLayout = new QVBoxLayout();
+
+    QFile *file = new QFile(fileName);
+    QString fileContent ;
+    if(!file->open(QIODevice::ReadOnly| QIODevice::Text)) {
+        return;
+    }
+    QTextStream textStream(file);
+    while(!textStream.atEnd()) {
+        fileContent+= textStream.readLine();
+        fileContent += QString("\n");
+    }
+
+    QTextEdit *textEdit = new QTextEdit(dailogBox);
+    QTextDocument *doc = new QTextDocument(fileContent,textEdit);
+    textEdit->setDocument(doc);
+    textEdit->setReadOnly(false);
+    boxLayout->addWidget(textEdit);
+
+
+    CustomPushButton *saveButton = new CustomPushButton(tr("Save"),fileName,textEdit,dailogBox);
+    boxLayout->addWidget(saveButton);
+
+    QPushButton *closeButton = new QPushButton(tr("Close"),dailogBox);
+    boxLayout->addWidget(closeButton);
+
+    connect(saveButton,SIGNAL(myclicked()),saveButton,SLOT(saveFile()));
+    connect(closeButton,SIGNAL(clicked()),dailogBox,SLOT(reject()));
+
+    dailogBox->setLayout(boxLayout);
+    dailogBox->show();
+}
+
+void MainWindow::updateSRCSlot() {
+    cout<<"Update SRC slot is getting called "<<endl;
+    cout<<"Update PPT Slot is getting called"<<endl;
+    QString fileName("main.c");
+    QDialog *dailogBox = new QDialog(this);
+    QVBoxLayout *boxLayout = new QVBoxLayout();
+
+    QFile *file = new QFile(fileName);
+    QString fileContent ;
+    if(!file->open(QIODevice::ReadOnly| QIODevice::Text)) {
+        return;
+    }
+    QTextStream textStream(file);
+    while(!textStream.atEnd()) {
+        fileContent+= textStream.readLine();
+        fileContent += QString("\n");
+    }
+
+    QTextEdit *textEdit = new QTextEdit(dailogBox);
+    QTextDocument *doc = new QTextDocument(fileContent,textEdit);
+    textEdit->setDocument(doc);
+    textEdit->setReadOnly(false);
+    boxLayout->addWidget(textEdit);
+
+
+    CustomPushButton *saveButton = new CustomPushButton(tr("Save"),fileName,textEdit,dailogBox);
+    boxLayout->addWidget(saveButton);
+
+    QPushButton *closeButton = new QPushButton(tr("Close"),dailogBox);
+    boxLayout->addWidget(closeButton);
+
+    connect(saveButton,SIGNAL(myclicked()),saveButton,SLOT(saveFile()));
+    connect(closeButton,SIGNAL(clicked()),dailogBox,SLOT(reject()));
+
+    dailogBox->setLayout(boxLayout);
+    dailogBox->show();
+}
+
+
+
+
 void MainWindow::updateAlgoSelect(int selection) {
     algoSelect = selection;
     cout<<"Current Selection is"<<selection<<endl;
@@ -225,14 +310,14 @@ void MainWindow::updateAlgoSelect(int selection) {
         ui->spacerCntLbl->setEnabled(false);
         ui->spacerCnt->setEnabled(false);
         ui->algoComboLbl->setEnabled(false);
-        ui->algoCombo->setEnabled(false);
-        ui->algoCountLbl->setEnabled(false);
-        ui->algoCount->setEnabled(false);
+        ui->algoCombo->setEnabled(false);        
         break;
     case 1:
     case 2:
-        ui->spacerCntLbl->setEnabled(true);
-        ui->spacerCnt->setEnabled(true);
+        if(choice == 2) {
+            ui->spacerCntLbl->setEnabled(true);
+            ui->spacerCnt->setEnabled(true);
+        }
         ui->algoComboLbl->setEnabled(true);
         ui->algoCombo->setEnabled(true);
         ui->algoCountLbl->setEnabled(true);

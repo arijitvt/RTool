@@ -8,7 +8,10 @@ PythonInterface::PythonInterface(QObject *parent) :
     algoChoice = -1;
     algoCount= 0;
     runCount= -1;
+    spCount = 0;
 }
+
+
 
 
 
@@ -24,6 +27,12 @@ void PythonInterface::compile() {
 
     case 1:
         command_string = "controller_ui.py rtool comp";
+        system(command_string.c_str());
+        emit finished();
+        break;
+
+    case 2:
+        command_string = "controller_ui.py cs comp";
         system(command_string.c_str());
         emit finished();
         break;
@@ -54,6 +63,15 @@ void PythonInterface::execute() {
         break;
 
     case 2:
+         //The format is =>cs--run-- RUN_COUNTER--SPACER_COUNT--ALGO_CHOICE--ALGO_COUNT--ARGUMENT
+        command_string = "controller_ui.py cs run "+QString::number(runCount)+\
+                " "+QString::number(spCount)+\
+                " "+QString::number(algoChoice)+\
+                " "+QString::number(algoCount)+\
+                " ";
+        cout<<" The command for CS ------------>"<<command_string.toStdString().c_str()<<endl;
+        system(command_string.toStdString().c_str());
+        emit finished();
         break;
 
     default:
@@ -97,6 +115,13 @@ void PythonInterface::setAlgoCount(int c) {
 }
 int PythonInterface::getAlgoCount() {
     return algoCount;
+}
+int PythonInterface::getSpCount() const {
+    return spCount;
+}
+
+void PythonInterface::setSpCount(int value) {
+    spCount = value;
 }
 
 int PythonInterface::COUNTER = 0;

@@ -14,9 +14,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp\
-        PythonInterface.cpp
+        PythonInterface.cpp \
+        custompushbutton.cpp
 
 HEADERS  += mainwindow.h\
-            PythonInterface.h
+            PythonInterface.h \
+            custompushbutton.h
 
 FORMS    += mainwindow.ui

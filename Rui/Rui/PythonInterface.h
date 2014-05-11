@@ -24,6 +24,7 @@ private:
     int runCount;
     int algoChoice;
     int algoCount;// Count for PCB and HaPSet
+    int spCount;//For CS
     static int COUNTER;
 
 public:
@@ -35,10 +36,12 @@ public:
     int getAlgoChoice();
     void setAlgoCount(int);
     int getAlgoCount();
+    int getSpCount() const;
+    void setSpCount(int value);
 
 signals:
-        void finished();
-        void traceGenrationFinished();
+    void finished();
+    void traceGenrationFinished();
 
 public slots:
     void compile();

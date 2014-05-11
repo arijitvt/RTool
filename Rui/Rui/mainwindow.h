@@ -11,6 +11,7 @@
 using namespace std;
 
 #include <PythonInterface.h>
+#include <custompushbutton.h>
 
 namespace Ui {
 class MainWindow;
@@ -32,6 +33,8 @@ private:
     int algoSelect;
 
 
+
+
 public slots:    
     void radioClicked(int);
     void compile();
@@ -41,6 +44,9 @@ public slots:
     void generateInvariantSlot();
     void updateAlgoSelect(int);
     void displayInvariants();
+
+    void updatePPTSlot();
+    void updateSRCSlot();
 
  };
 

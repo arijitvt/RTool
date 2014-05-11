@@ -192,6 +192,7 @@ def main_rtool():
 def cs_tool_usage():
 	help_msg = "The idea is to first generate the static program points i.e. those that are related only the functions.\n Then compile the program and run\
 			To compile tukli.py comp\n To run tukli.py run <#> <$> # is the run_count $ is the sp_count\n To clean the previous results run tukli clean"
+        help_msg= " The format is => RUN_COUNTER--SPACER_COUNT--ALGO_CHOICE--ALGO_COUNT--ARGUMENT"
 	print help_msg;
 	return;
 
@@ -199,12 +200,17 @@ def cs_tool_usage():
         #command_string = "runner.py comp_sp "+str(counter);
 
 def cs_compiling():
-	command_string = "runner.py gen_ppt"
+	command_string = "runner_ui.py  gen_ppt"
 	os.system(command_string);
 	return ;
 
-def cs_runner(sp_count):
-	command_string = "runner.py loadsp_only "+str(sp_count);
+def cs_runner(sp_count,alg_choice,alg_count,arg):
+    # The format is => --SPACER_COUNT--ALGO_CHOICE--ALGO_COUNT--ARGUMENT
+        command_string = "runner_ui.py loadsp_only "+str(sp_count)+\
+                        " "+str(alg_choice)+\
+                        " "+str(alg_count)+" "+str(arg);
+        print "Command string from cs runner ---------->"+command_string;
+                        
 	os.system(command_string);
 	return;
 
@@ -225,23 +231,24 @@ def cs_clean():
 def main_cs():
 
 	init();
-	if  len(sys.argv) < 2 :
+	if  len(sys.argv) <= 3 :
 		cs_tool_usage();
 		return;
 	
-	if sys.argv[1] == "comp" :
-		#assert len(sys.argv) == 3;
-		#counter = sys.argv[2];
-		#cs_compiling(counter);
+	if sys.argv[2] == "comp" :
 		shutil.copy(daikon_path+"/hook.h", ".");
 		cs_compiling();
 
-	elif sys.argv[1] == "run" :
+	elif sys.argv[2] == "run" :
 		print "Length is : "+str(len(sys.argv));
-		assert len(sys.argv) == 4;
-		run_counter =  sys.argv[2];
-		sp_count = sys.argv[3];
-	       	cs_runner(sp_count);
+		assert len(sys.argv) == 7;
+                # The format is => RUN_COUNTER--SPACER_COUNT--ALGO_CHOICE--ALGO_COUNT--ARGUMENT
+		run_counter =  sys.argv[3];
+		sp_count = sys.argv[4];
+                alg_choice = sys.argv[5];
+                alg_count =  sys.argv[6];
+                arg = " ";
+	       	cs_runner(sp_count,alg_choice,alg_count,arg);
 	       	dtrace_manip(run_counter)
 
 	elif sys.argv[1] == "clean":
@@ -265,6 +272,9 @@ def main_controller() :
 
     elif(sys.argv[1] == "rtool") :
         main_rtool();
+
+    elif(sys.argv[1] == "cs") :
+        main_cs();
     return;
 
 

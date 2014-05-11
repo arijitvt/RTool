@@ -125,7 +125,6 @@ def main_controller() :
 
 
 	elif sys.argv[1] == "load_only":
-		print "------------------------- Load Only -----------------"
 		do_instrumentation();
 		alg_choice= sys.argv[2];
 		alg_count=sys.argv[3];
@@ -144,16 +143,19 @@ def main_controller() :
 #			runner();
 #			parser();
 #
-#	elif sys.argv[1] == "loadsp_only":
-#	        if len(sys.argv) < 3:
-#	       		usage();
-#		       	exit(0)
-#
-#	        else:
-#			sp_val = sys.argv[2];
-#			do_instrumentation_sp(sp_val);
-#			runner();
-#			only_parser();
+	elif sys.argv[1] == "loadsp_only":
+	        if len(sys.argv) < 4:
+	       		usage();
+		       	exit(0)
+
+	        else:
+			sp_val = sys.argv[2];
+			alg_choice=sys.argv[3];
+			alg_count=sys.argv[4];
+			arg=" ";
+			do_instrumentation_sp(sp_val);
+			runner(alg_choice,alg_count,arg);
+			only_parser();
 #
 #	elif sys.argv[1] == "run_sp":
 #		if len(sys.argv) < 3:
@@ -168,9 +170,9 @@ def main_controller() :
 #			parser();
 #
 #
-#	elif sys.argv[1] == "gen_ppt":
-#		gen_ppts();
-#
+	elif sys.argv[1] == "gen_ppt":
+		gen_ppts();
+
 	elif sys.argv[1] == "comp":
 		gen_ppts();
 		do_instrumentation();
