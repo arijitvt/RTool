@@ -107,4 +107,4 @@ Rest of the three special characters \($,#,%\), means exactly the same as previo
 
 All these utilities can be ran though a ui built based on qt framework. An sample ui can be seen as,
     ![GitHub Logo](/images/Rui.png)
-	Format: ![Alt Text](/images/Rui.png)
+
