@@ -56,3 +56,51 @@ However there are some simple steps associated to it.
 ##7. Update the path in the exports.sh 
 During the installation process we have already updated various path variables. We may double check all the path variables at this stage. Once that is done, update the `PATH` variable with the RTool/bin and update the `daikon` variable with the source folder where the DaikonPass resides. DaikonPass folder exists in the `llvm-3.2.src/lib/Transforms/Daikon` folder. This folder should contain the hook.h and hooh.c files, which contains the source for the *hook_assert* macro.
 
+
+#How to use RTool
+===========================
+RTool can be used in three modes.
+
+1. Use the existing daikon infrastructure through a nitty gritty interface.
+2. Use the RTool infrastructure to generate invarint at all function entry-exit and around the global variable access locations.
+3. Generate the invariants at various location varied dynamically using command line control.
+
+Before using RTool, check if you can have access to `controller.py`,`runner.py` and `r_tool.py`. If it is not possible to access them then update the path variable properly in the RTool/exports.sh and check again.
+
+##1.  RTool for Daikon as it is
+--------------------------------
+RTool can be used to run Daikon as it is in a more comprehensive way and using much more shorter commands. To compile the program and dump the program points, run the command 
+
+`controller.py daikon dump`
+
+This compile the program, create the executable and create the program points cum variables as well. One can edit these files, to reduce the number of porgram points and/or variables of interest on which the invariant should be generated.
+Once this step is over, then we should run the program, using the command 
+
+`controller.py daikon rep #`
+
+Here <#> should be the run count/iteration count. Since daikon needs four different values of the variables, so we may have edit the source with different values of global variables and run the program multiple times.  That is the reason we have to supply this number and iterate this.  This process will dump all the thread-modular trace files inside a trace folder, called and one can generate invariant using the daikon's backend by running the command,
+
+`java daikon.Daikon *.dtrace`
+
+##2. RTool's Invariant Generation
+The main usage of the RTool is to generate invariants for concurrent programs. For that purpose, we should invoke rtool in similar fashion as discussed in the previous section. To compile the program and generate program points, use the below mentioned command.
+
+`controller.py rtool comp`
+
+Once that is generated, we can use
+
+`controller.py rtool run $ # %`
+
+Here $ corresponds to the iteration count (as we mentioned in the previous section about this iteration count). # corresponds to the algo choice. Since inspect can use DPOR, PCB or HaPSet for systematic exploration, so we can dynamically choose the algorithm(0 -> DPOR, 1 -> PCB, 2->HaPSet). % denotes the number, required for PCB and HaPSet. It should  ideally be 0 for DPOR.
+
+##3. RTool for Critical Section Determination
+The compilation should follow the exact same procedure as above, except the first argument will be 'cs':
+
+`controller.py cs comp`
+
+
+To run the program,
+
+`controller.py cs run $ @ # %`
+
+Rest of the three special characters \($,#,%\), means exactly the same as previous section describes, only @ should be replaced with the spacer count, to dynamically vary the locations of instrumentation to determine the cs. 
