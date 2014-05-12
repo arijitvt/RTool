@@ -24,49 +24,49 @@ DaikonPass::DaikonPass():ModulePass(ID) {
 
 bool DaikonPass::runOnModule(Module &module) {
 
-        //if(dumpppt && load) {
-        //	errs()<<"Both dumpppt and load can not be true at the same time \n";
-        //	return false;
-        //}
-        //if(dumpppt) {
-        //	generateProgramPoints(module);
-        //	errs()<<"Program Points are being generated\n";
-        //	return false;
-        //}
-        //if(load) {
-        //	loadProgramPoints(module);
-        //	errs()<<"Program points are loaded "<<programPoints.size()<<"\n";
-        //}
+        if(dumpppt && load) {
+        	errs()<<"Both dumpppt and load can not be true at the same time \n";
+        	return false;
+        }
+        if(dumpppt) {
+        	generateProgramPoints(module);
+        	errs()<<"Program Points are being generated\n";
+        	return false;
+        }
+        if(load) {
+        	loadProgramPoints(module);
+        	errs()<<"Program points are loaded "<<programPoints.size()<<"\n";
+        }
         populateGlobals(module);
-	displayGlobalVars();
-	return false;
-        //if(load) {
-        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
-        //		Function *func = &*funcItr;
-        //		string funcName(func->getName().trim().data());
-        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
-        //			//Temporarily stopping the hook for Store option
-        //			//hookForStore(func);	
-        //			hookAtFunctionStart(func);
-        //			hookAtFunctionEnd(func);
-        //			//Do not call insertDynamicCallAtGlobalAccess here.
-        //			//It will jeoperdize the instrumentation.
-        //		}
-        //	}
-        //}
-        //dumpDeclFile(module);
-        ////Insert the dynamic fake functions for the global variables
-        //if(load) {
+	//displayGlobalVars();
+	//return false;
+        if(load) {
+        	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
+        		Function *func = &*funcItr;
+        		string funcName(func->getName().trim().data());
+        		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
+        			//Temporarily stopping the hook for Store option
+        			//hookForStore(func);	
+        			hookAtFunctionStart(func);
+        			hookAtFunctionEnd(func);
+        			//Do not call insertDynamicCallAtGlobalAccess here.
+        			//It will jeoperdize the instrumentation.
+        		}
+        	}
+        }
+        dumpDeclFile(module);
+        //Insert the dynamic fake functions for the global variables
+        if(load) {
 
-        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
-        //		Function *func = &*funcItr;
-        //		string funcName(func->getName().trim().data());
-        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
-        //			insertDynamicCallAtGlobalAccess(func);
-        //		}
-        //	}
-        //}
-        //return true;
+        	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
+        		Function *func = &*funcItr;
+        		string funcName(func->getName().trim().data());
+        		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
+        			insertDynamicCallAtGlobalAccess(func);
+        		}
+        	}
+        }
+        return true;
 }
 
 
@@ -86,27 +86,39 @@ void DaikonPass::populateGlobals(Module &module) {
 			}
 			string type1 = getTypeString(globalVar->getInitializer()->getType());
 			string type2 = getTypeString(globalVar->getType());
-			//if(type1 == "int" || type2 == "int**") {
-			//if(type1 == "int" || type2 == "pointer") {
-			//	globalList.push_back(globalVar);
-			//}
-
-			int initializerTypeId = globalVar->getInitializer()->getType()->getTypeID();
-			switch(initializerTypeId) {
-				case Type::IntegerTyID:
-				case Type::FloatTyID:
-				case Type::DoubleTyID:
-					globalList.push_back(globalVar);
-					break;
-
-				default:
-					errs()<<" Now in the default case section \n";
-			
+			if(type1 == "int" || type2 == "int**") {
+				globalList.push_back(globalVar);
 			}
+
+		       // Type *initializerType = globalVar->getInitializer()->getType();
+		       // if(isSupportedType(initializerType)) {
+		       // 	globalList.push_back(globalVar);
+		       // }
 		}
 
 	}
 } 
+
+bool DaikonPass::isSupportedType(Value *val) {
+	return isSupportedType(val->getType());
+}
+
+bool DaikonPass::isSupportedType(Type *ty){
+	switch(ty->getTypeID()) {
+
+		case Type::IntegerTyID:
+		case Type::FloatTyID:
+		case Type::DoubleTyID:
+		case Type::ArrayTyID:
+		case Type::StructTyID:
+		case Type::VectorTyID:
+		case Type::FunctionTyID:
+			return true;
+
+		default:
+			return false;
+	}
+}
 
 
 bool DaikonPass::isGlobal(Value *value) {
@@ -226,6 +238,7 @@ void DaikonPass::putTabInFile(fstream &stream, int tabCount) {
  * THIS METHOD IS NOT IN USE
  * This method will insert hook before and after every Store instruction 
  **/
+#if 0
 void DaikonPass::hookForStore(Function *func) {
 	StringRef funcName = func->getName();
 	if(doNotInstrument(funcName)) return;	
@@ -270,6 +283,7 @@ void DaikonPass::hookForStore(Function *func) {
         	}
         }
 }
+#endif
 
 /**
  * This Function will hook at the beginning of every Function
