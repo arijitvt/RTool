@@ -36,3 +36,17 @@ Since Inspect uses smt solver in the backend, so it has the depency on this. Go 
 
 ##Install Inspect
   Installing Inspect is also very straight forward. Go inside the inspect-0.3 folder and run the `make` command from the folder. It will compile and create the inspect executatable inside the RTool/bin folder. To test whether, the `make` command executed properly, check if you have the  inspect executable present in the RTool/bin folder.
+
+##Install Thread Modular Parser
+Jar file for the Thread modular parser is present in the RTool/jars. Update the class path with the location of the parser.jar in RTool/exports.sh.
+
+However the source code for that jar file is already present in the RTool/SimpleDeclParser folder and one can create the jar from the java source using standard jar file making process and update the corresponding classpath with the jar location in the export.sh.
+
+##Install Daikon
+The complete guide for Daikon installation can be found at this [website](http://plse.cs.washington.edu/daikon/download/doc/daikon.html).
+However there are some simple steps associated to it.
+ - Download and install jdk 1.7 \(jdk 1.6 does not work for daikon\).
+ - Update the JAVA_HOME in the bashrc
+ - Populate DAIKONDIR variable with the top directory of the daikon folder and export the variable.
+ - Export the daikon.bashrc by running `source $DAIKONDIR/scripts/daikon.bashrc`
+ - Then run make from the daikon folder. This will install daikon and update all the required the path.
