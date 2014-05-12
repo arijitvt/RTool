@@ -104,3 +104,7 @@ To run the program,
 `controller.py cs run $ @ # %`
 
 Rest of the three special characters \($,#,%\), means exactly the same as previous section describes, only @ should be replaced with the spacer count, to dynamically vary the locations of instrumentation to determine the cs. 
+
+All these utilities can be ran though a ui built based on qt framework. An sample ui can be seen as,
+    ![GitHub Logo](/images/Rui.png)
+	Format: ![Alt Text](/images/Rui.png)
