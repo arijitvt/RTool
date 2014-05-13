@@ -84,11 +84,6 @@ class DaikonPass:public ModulePass {
 		void handleStoreInst(StoreInst *storeInst);
 		void blockBreaker(Instruction *);
 
-		//Type upgrade related functions
-		bool isSupportedType(Value *val);
-		bool isSupportedType(Type *ty);
-
-
 	private:
 		vector<Value*>  globalList;
 		vector<string> 	doNotInstrumentFunctions;

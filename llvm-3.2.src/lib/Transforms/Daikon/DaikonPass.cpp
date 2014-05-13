@@ -23,6 +23,11 @@ DaikonPass::DaikonPass():ModulePass(ID) {
 
 
 bool DaikonPass::runOnModule(Module &module) {
+//	for(Module::iterator  funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
+//		Function *func = &*funcItr;
+//		testMethod(func);
+//	}
+//        return true;
 
         if(dumpppt && load) {
         	errs()<<"Both dumpppt and load can not be true at the same time \n";
@@ -39,7 +44,6 @@ bool DaikonPass::runOnModule(Module &module) {
         }
         populateGlobals(module);
 	//displayGlobalVars();
-	//return false;
         if(load) {
         	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
         		Function *func = &*funcItr;
@@ -86,39 +90,14 @@ void DaikonPass::populateGlobals(Module &module) {
 			}
 			string type1 = getTypeString(globalVar->getInitializer()->getType());
 			string type2 = getTypeString(globalVar->getType());
-			if(type1 == "int" || type2 == "int**") {
+			//if(type1 == "int" || type2 == "int**") {
+			if(type1 == "int" || type2 == "pointer") {
 				globalList.push_back(globalVar);
 			}
-
-		       // Type *initializerType = globalVar->getInitializer()->getType();
-		       // if(isSupportedType(initializerType)) {
-		       // 	globalList.push_back(globalVar);
-		       // }
 		}
 
 	}
 } 
-
-bool DaikonPass::isSupportedType(Value *val) {
-	return isSupportedType(val->getType());
-}
-
-bool DaikonPass::isSupportedType(Type *ty){
-	switch(ty->getTypeID()) {
-
-		case Type::IntegerTyID:
-		case Type::FloatTyID:
-		case Type::DoubleTyID:
-		case Type::ArrayTyID:
-		case Type::StructTyID:
-		case Type::VectorTyID:
-		case Type::FunctionTyID:
-			return true;
-
-		default:
-			return false;
-	}
-}
 
 
 bool DaikonPass::isGlobal(Value *value) {
@@ -192,34 +171,21 @@ string DaikonPass::getTypeString(Type *type) {
 						return "double";
 					}
 
-
 		case Type::PointerTyID:{
-					       PointerType *ptrType = static_cast<PointerType*>(type);
-					       if(ptrType  ==  ptr32Type || ptrType == ptr64Type) {
-						       return "int*";
-					       }else if(ptrType == ptr8Type) {
-						       return "char*";
-					       }
 					       return "pointer";
+					      // PointerType *ptrType = static_cast<PointerType*>(type);
+					      // if(ptrType  ==  ptr32Type || ptrType == ptr64Type) {
+					      //         return "int*";
+					      // }else if(ptrType == ptr8Type) {
+					      // 		return "char*";
+					      // }else if(ptrType == ptrPtr32Type || ptrType == ptrPtr64Type) {
+					      // 		return "int**";
+					      // }else {
+					      //         return "pointer";
+					      // }
 				       }
-
-		case Type::StructTyID: {
-					       return "structure";
-					 	
-				  	}
-
-		case Type::VectorTyID: {
-					       return "vector";
-				       
-				       
-				       }
-
-		case Type::ArrayTyID: {
-					      return "array";
-				      
-				      }
 		default:  {
-				  errs()<<" Not able to handle any other type of the type with id : "<<type->getTypeID()<<"\n";
+					//errs()<<"Unable to identify type : "<<type->getTypeID()<<"\n";
 			}
 
 	}
@@ -238,7 +204,6 @@ void DaikonPass::putTabInFile(fstream &stream, int tabCount) {
  * THIS METHOD IS NOT IN USE
  * This method will insert hook before and after every Store instruction 
  **/
-#if 0
 void DaikonPass::hookForStore(Function *func) {
 	StringRef funcName = func->getName();
 	if(doNotInstrument(funcName)) return;	
@@ -283,7 +248,6 @@ void DaikonPass::hookForStore(Function *func) {
         	}
         }
 }
-#endif
 
 /**
  * This Function will hook at the beginning of every Function
