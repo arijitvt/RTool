@@ -84,6 +84,14 @@ class DaikonPass:public ModulePass {
 		void handleStoreInst(StoreInst *storeInst);
 		void blockBreaker(Instruction *);
 
+		//Get Decl Type String
+		string getDeclTypeString(Value *val);
+		string getDeclTypeString(Type *ty);
+
+		//Type related  function.
+		bool isSupportedType(Value *val);
+		bool isSupportedType(Type *type);
+
 	private:
 		vector<Value*>  globalList;
 		vector<string> 	doNotInstrumentFunctions;

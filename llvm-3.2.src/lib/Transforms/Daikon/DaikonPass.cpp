@@ -23,11 +23,6 @@ DaikonPass::DaikonPass():ModulePass(ID) {
 
 
 bool DaikonPass::runOnModule(Module &module) {
-//	for(Module::iterator  funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
-//		Function *func = &*funcItr;
-//		testMethod(func);
-//	}
-//        return true;
 
         if(dumpppt && load) {
         	errs()<<"Both dumpppt and load can not be true at the same time \n";
@@ -44,32 +39,33 @@ bool DaikonPass::runOnModule(Module &module) {
         }
         populateGlobals(module);
 	//displayGlobalVars();
-        if(load) {
-        	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
-        		Function *func = &*funcItr;
-        		string funcName(func->getName().trim().data());
-        		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
-        			//Temporarily stopping the hook for Store option
-        			//hookForStore(func);	
-        			hookAtFunctionStart(func);
-        			hookAtFunctionEnd(func);
-        			//Do not call insertDynamicCallAtGlobalAccess here.
-        			//It will jeoperdize the instrumentation.
-        		}
-        	}
-        }
+        //if(load) {
+        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
+        //		Function *func = &*funcItr;
+        //		string funcName(func->getName().trim().data());
+        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
+        //			//Temporarily stopping the hook for Store option
+        //			//hookForStore(func);	
+        //			hookAtFunctionStart(func);
+        //			hookAtFunctionEnd(func);
+        //			//Do not call insertDynamicCallAtGlobalAccess here.
+        //			//It will jeoperdize the instrumentation.
+        //		}
+        //	}
+        //}
         dumpDeclFile(module);
         //Insert the dynamic fake functions for the global variables
-        if(load) {
+	//Temporarily closing this section
+        //if(load) {
 
-        	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
-        		Function *func = &*funcItr;
-        		string funcName(func->getName().trim().data());
-        		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
-        			insertDynamicCallAtGlobalAccess(func);
-        		}
-        	}
-        }
+        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
+        //		Function *func = &*funcItr;
+        //		string funcName(func->getName().trim().data());
+        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
+        //			insertDynamicCallAtGlobalAccess(func);
+        //		}
+        //	}
+        //}
         return true;
 }
 
@@ -149,6 +145,61 @@ string DaikonPass::getTypeString(Value *value) {
 }
 
 string DaikonPass::getTypeString(Type *type) {
+	switch(type->getTypeID()) {
+		case Type::IntegerTyID:{
+					       IntegerType *intType=static_cast<IntegerType*>(type);
+					       if(intType->getBitWidth() == 8) {
+						       return "char";
+					       }else if(intType->getBitWidth() == 32|| 
+							       intType->getBitWidth() == 64){
+						       return "int";
+					       }else {
+						       return "int";
+					       }
+				       }
+
+		case Type::FloatTyID:{
+					     return "float";
+				     }
+
+		case Type::DoubleTyID:  {
+						return "double";
+					}
+
+		case Type::StructTyID: {
+					       return "structure";
+				       }
+
+		case Type::VectorTyID: {
+					       return "vector";
+				       }
+
+		case Type::ArrayTyID: {
+					      return "array";
+
+				      }
+		case Type::PointerTyID:{
+					       PointerType *ptrType = static_cast<PointerType*>(type);
+					       if(ptrType  ==  ptr32Type || ptrType == ptr64Type) {
+						       return "int*";
+					       }else if(ptrType == ptr8Type) {
+						       return "char*";
+					       }
+					       return "pointer";
+				       }
+		default:  {
+				  return "invalid";
+			  }
+
+	}
+	return "unknown";
+}
+
+
+#if 0
+//Old getTypeString is decomissioned
+
+string DaikonPass::getTypeString(Type *type) {
 	//errs()<<"Type is :"<<*value->getType()<<"\n";
 	switch(type->getTypeID()) {
 		case Type::IntegerTyID:{
@@ -191,6 +242,30 @@ string DaikonPass::getTypeString(Type *type) {
 	}
 	return "unknown";
 }
+
+#endif
+
+bool DaikonPass::isSupportedType(Value *val) {
+	return isSupportedType(val->getType());
+}
+
+bool DaikonPass::isSupportedType(Type *type) {
+	switch (type->getTypeID()) {
+
+		case Type::IntegerTyID:
+		case Type::FloatTyID:
+		case Type::DoubleTyID:  
+			//case Type::ArrayTyID: 
+			// case Type::StructTyID: 
+			// case Type::VectorTyID: 
+			return true;
+
+		default:
+			return false;
+	}
+
+}
+
 
 void DaikonPass::putTabInFile(fstream &stream, int tabCount) {
 	if(stream.is_open()) {
@@ -254,7 +329,13 @@ void DaikonPass::hookForStore(Function *func) {
  */
 void DaikonPass::hookAtFunctionStart(Function *func) {
 	if(doNotInstrument(func->getName())) return;
+        //Do the initial Starts
+	Module *module = func->getParent();
+	if(!isInit) {
+		doInit(module);
+	}
 
+	//Now rest of the work
 
 	vector<Value*> intArguments;
 	/**
@@ -263,17 +344,12 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 	for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
 		Argument *arg = &*argItr;
 		Value *val = static_cast<Value*>(arg);
-		StringRef retType(getTypeString(val));
-		if( retType.equals("int")) {
-		 	intArguments.push_back(val);
+		if(isSupportedType(val)) {
+			intArguments.push_back(val);
 		}
 	}
 
 	int totalArgumentSize = intArguments.size()+globalList.size();
-	Module *module = func->getParent();
-	if(!isInit) {
-		doInit(module);
-	}
 	/**
 	 * So far the format is varcount,function name, then globals, function params
 	 * The var count will count globals and function params but not the function name
@@ -387,7 +463,13 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 
 void DaikonPass::hookAtFunctionEnd(Function *func) {
 	if(doNotInstrument(func->getName())) return;
+        //Formalities first
+	Module *module = func->getParent();
+	if(!isInit) {
+		doInit(module);
+	}
 
+	//Work second.
 	vector<Value*> intArguments;
 	/**
 	 * We will Handle only Integer types and ignore all others for time begin
@@ -395,23 +477,14 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 	for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
 		Argument *arg = &*argItr;
 		Value *val = static_cast<Value*>(arg);
-		StringRef retTypeRef(getTypeString(val)) ;
-		if(retTypeRef.equals("int")) {
+		if(!isSupportedType(val)) {
 			intArguments.push_back(val);
 		}
-	       // size_t found = retType.find("int");
-	       // if(found!=string::npos) {
-	       // 	intArguments.push_back(val);
-	       // }
 	}
 
 	int totalArgumentSize = intArguments.size()+globalList.size();
 
 	
-	Module *module = func->getParent();
-	if(!isInit) {
-		doInit(module);
-	}
 	/**
 	 * So far the format is varcount,function name, then globals, function params
 	 * The var count will count globals and function params but not the function name
@@ -568,6 +641,27 @@ void DaikonPass::displayLoadedProgrampoints() {
 		errs() <<"Loaded Program point is : "<<StringRef(s)<<"\n";
 	}
 }
+/**
+ *
+ */
+string DaikonPass::getDeclTypeString(Type *ty) {
+
+	string returnString = "";
+	string repTypeString = getTypeString(ty) ;
+	if(repTypeString == "char") {
+		returnString = "int";
+	}else if(repTypeString == "float") {
+		returnString =  "double";
+	}else {
+		returnString = repTypeString;
+	}
+	return returnString;
+}
+
+string DaikonPass::getDeclTypeString(Value *val) {
+	Type *ty = val->getType();
+	return getDeclTypeString(ty);
+}
 
 /**
  * This Function will create declfile
@@ -603,6 +697,11 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 			//Process the Global values
 			for(vector<Value*>::iterator globalItr = globalList.begin(); globalItr != globalList.end(); ++globalItr) {				
 				GlobalVariable *v = static_cast<GlobalVariable*>(*globalItr);
+				Value *globalValue = v->getInitializer();
+				errs()<<"Processing the global variable "<<*globalValue<<"\n";
+				if( globalValue  && !isSupportedType(globalValue)) {
+					continue;
+				}
 				string varName = v->getName().trim().str();
 				tabCount = 1;
 				putTabInFile(declFile,tabCount);
@@ -611,16 +710,18 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				putTabInFile(declFile,tabCount);
 				declFile<<"var-kind variable\n";
 				putTabInFile(declFile,tabCount);
-				//declFile<<"rep-type "<<getTypeString(v->getInitializer())<<"\n";
-				declFile<<"rep-type "<<"int"<<"\n";
+				string repTypeString = getDeclTypeString(v->getInitializer());
+				declFile<<"rep-type "<<repTypeString<<"\n";
+				//declFile<<"rep-type "<<"int"<<"\n";
 				putTabInFile(declFile,tabCount);
-				//declFile<<"dec-type "<<getTypeString(v->getInitializer())<<"\n";
-				declFile<<"dec-type "<<"int"<<"\n";
+				declFile<<"dec-type "<<getTypeString(v->getInitializer())<<"\n";
+				//declFile<<"dec-type "<<"int"<<"\n";
 			}
 			//Process function Params
 			for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
 				Argument *arg = &*argItr;
 				Value *v = static_cast<Value*>(arg);
+				if(!isSupportedType(v)) continue;
 				string varName = v->getName().trim().str();
 				string typeString = getTypeString(v);
 				StringRef typeStringRef(typeString);
@@ -628,12 +729,6 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				 * We are not reporting anything other than int.
 				 * So doing this filtering
 				 */
-				//size_t found = typeString.find("int");
-				//if(found == string::npos) 
-				//	continue;
-			        if(!typeStringRef.equals("int")) {
-					continue;
-				}
 				tabCount = 1;
 				putTabInFile(declFile,tabCount);
 				declFile<<"variable "<<varName<<"\n";
@@ -641,18 +736,20 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				putTabInFile(declFile,tabCount);
 				declFile<<"var-kind variable\n";
 				putTabInFile(declFile,tabCount);
-				//declFile<<"rep-type "<<getTypeString(v)<<"\n";
-				declFile<<"rep-type "<<"int"<<"\n";
+				string repTypeString = getDeclTypeString(v);
+				declFile<<"rep-type "<<repTypeString<<"\n";
+				//declFile<<"rep-type "<<"int"<<"\n";
 				putTabInFile(declFile,tabCount);
-				//declFile<<"dec-type "<<getTypeString(v)<<"\n";
-				declFile<<"dec-type "<<"int"<<"\n";
+				declFile<<"dec-type "<<getTypeString(v)<<"\n";
+				//declFile<<"dec-type "<<"int"<<"\n";
 				putTabInFile(declFile,tabCount);
 				declFile<<"flags is_param\n";
 			}
 
 			if(EntryOrExit == "EXIT") {
 			    string returnType = getTypeString(func->getReturnType());
-			    if(returnType == "int") {
+			   // if(returnType == "int") {
+			   if(isSupportedType(func->getReturnType())) {
 				tabCount = 1;
 				putTabInFile(declFile,tabCount);
 				declFile<<"variable return\n";
@@ -660,7 +757,8 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				putTabInFile(declFile,tabCount);
 				declFile<<"var-kind variable\n";
 				putTabInFile(declFile,tabCount);
-				declFile<<"rep-type "<<returnType<<"\n";
+				string repTypeString = getDeclTypeString(func->getReturnType());
+				declFile<<"rep-type "<<repTypeString<<"\n";
 				putTabInFile(declFile,tabCount);
 				declFile<<"dec-type "<<returnType<<"\n";
 			    }
