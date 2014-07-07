@@ -83,6 +83,31 @@ void writeInfoIntoDtrace() {
 //
 //}
 
+
+//helper function to cast void data pointers
+
+
+void castHelp(char* type, void** value )
+{
+       if ( type == "int")
+       {
+		(int*) *value;
+       }
+       else if( type == "char")
+       {
+       		(char*) *value;
+       }
+       else if( type == "float")
+       {
+       		(float*) *value;
+       }
+       else if( type == "double")
+       {
+       		(double*) *value;
+       }
+
+}
+
 void clap_hookBefore(int varCount, ...) {
 	va_list vararg;
 	va_start(vararg,varCount);
@@ -233,10 +258,11 @@ void clap_hookFuncBegin(int varCount, ...) {
 			char *varName = va_arg(vararg,char*);
 			char *varType = va_arg(vararg,char*);
 			if(varName[0] == ':') {
-				int *data = va_arg(vararg,int*);
+				void *data = va_arg(vararg,void*);
+				castHelp( varType, &data);
 #if 0
 				printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
-#endif
+#endif                                          
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);

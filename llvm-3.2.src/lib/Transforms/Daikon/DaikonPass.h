@@ -70,7 +70,13 @@ class DaikonPass:public ModulePass {
 		Value*  getValueForString(StringRef,Module *);
 		string getTypeString(Value *v);
 		string getTypeString(Type *v);
+		string getRepString(string str);
 		void putTabInFile(fstream &,int);
+		bool isSupportedType(Value *v);
+		bool isSupportedType(Type *t);
+
+
+
 
 		//This is for testing
 		void testMethod(Function *);
@@ -83,14 +89,6 @@ class DaikonPass:public ModulePass {
 		//Atomic Region Test Methods
 		void handleStoreInst(StoreInst *storeInst);
 		void blockBreaker(Instruction *);
-
-		//Get Decl Type String
-		string getDeclTypeString(Value *val);
-		string getDeclTypeString(Type *ty);
-
-		//Type related  function.
-		bool isSupportedType(Value *val);
-		bool isSupportedType(Type *type);
 
 	private:
 		vector<Value*>  globalList;
