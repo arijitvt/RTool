@@ -87,9 +87,9 @@ void DaikonPass::populateGlobals(Module &module) {
 			string type1 = getTypeString(globalVar->getInitializer()->getType());
 			string type2 = getTypeString(globalVar->getType());
 			//if(type1 == "int" || type2 == "int**") {
-			if(type1 == "int" || type2 == "pointer") {
-				globalList.push_back(globalVar);
-			}
+		       // if(type1 == "int" || type2 == "pointer") {
+		        	globalList.push_back(globalVar);
+		       // }
 		}
 
 	}
@@ -149,12 +149,14 @@ string DaikonPass::getTypeString(Type *type) {
 		case Type::IntegerTyID:{
 					       IntegerType *intType=static_cast<IntegerType*>(type);
 					       if(intType->getBitWidth() == 8) {
-						       return "char";
-					       }else if(intType->getBitWidth() == 32|| 
-							       intType->getBitWidth() == 64){
-						       return "int";
+						       return CHAR_TYPE;
+					       }else if(intType->getBitWidth() == 32){
+						       return INT_TYPE;
+					       }else if(intType->getBitWidth() == 64) {
+						       	errs()<<"This is the 64 bit integer procerssing"<<"\n";
+					       		return LONG_TYPE;
 					       }else {
-						       return "int";
+						       return INT_TYPE;
 					       }
 				       }
 
@@ -694,6 +696,7 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				putTabInFile(declFile,tabCount);
 				declFile<<"ppt-type subexit\n";
 			}
+			errs()<<"Size of the global variable list" <<globalList.size()<<"\n";
 			//Process the Global values
 			for(vector<Value*>::iterator globalItr = globalList.begin(); globalItr != globalList.end(); ++globalItr) {				
 				GlobalVariable *v = static_cast<GlobalVariable*>(*globalItr);
@@ -711,11 +714,23 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				declFile<<"var-kind variable\n";
 				putTabInFile(declFile,tabCount);
 				string repTypeString = getDeclTypeString(v->getInitializer());
-				declFile<<"rep-type "<<repTypeString<<"\n";
-				//declFile<<"rep-type "<<"int"<<"\n";
-				putTabInFile(declFile,tabCount);
-				declFile<<"dec-type "<<getTypeString(v->getInitializer())<<"\n";
-				//declFile<<"dec-type "<<"int"<<"\n";
+				errs()<<"Name : "<<varName.c_str()<<"  " <<repTypeString<<"\n";
+
+				//For long/int64_t/long long data type
+				//rep-type is int
+				//and dec-type is long
+				if(repTypeString == LONG_TYPE) {
+					declFile<<"rep-type "<<"int"<<"\n";
+					putTabInFile(declFile,tabCount);
+					declFile<<"dec-type "<<repTypeString<<"\n";
+				
+				}else {
+					declFile<<"rep-type "<<repTypeString<<"\n";
+					//declFile<<"rep-type "<<"int"<<"\n";
+					putTabInFile(declFile,tabCount);
+					declFile<<"dec-type "<<getTypeString(v->getInitializer())<<"\n";
+					//declFile<<"dec-type "<<"int"<<"\n";
+				}
 			}
 			//Process function Params
 			for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
