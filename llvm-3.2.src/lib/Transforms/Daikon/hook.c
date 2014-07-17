@@ -264,28 +264,28 @@ void clap_hookFuncBegin(int varCount, ...) {
 			if(varName[0] == ':') 
 			{
 				void *data = va_arg(vararg,void*);
-				castHelp( varType, &data);
+				
 #if 0
 				printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
 #endif                                          
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
-				if (varType == "int")
+				if(strcmp(varType,"int") ==0 )
 				{
-				sprintf(buffer,"%d",*(int*)data);
+					sprintf(buffer,"%d",*(int*)data);
 				}
-				else if(varType == "float")
+				else if(strcmp(varType,"float") ==0 )
 				{
-				sprintf(buffer,"%d",*(float*)data);
+					sprintf(buffer,"%f",*(float*)data);
 				}
-				else if (varType == "double")
+				else if(strcmp(varType,"double") ==0 )
 				{
-				sprintf(buffer,"%d",*(double*)data);
+					sprintf(buffer,"%f",*(double*)data);
 				}
-				else if (varType == "char")
+				else if(strcmp(varType,"char") ==0 )
 				{
-				sprintf(buffer,"%d",*(char*)data);
+					sprintf(buffer,"%c",*(char*)data);
 				}
 				fputs(buffer,fp);
 				fputs("\n",fp);
@@ -310,12 +310,12 @@ void clap_hookFuncBegin(int varCount, ...) {
 			{
 				float data = va_arg(vararg,float);
 #ifdef DARIJIT
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
+				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
 #endif
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%d",data);
+				sprintf(buffer,"%f",data);
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
@@ -324,12 +324,12 @@ void clap_hookFuncBegin(int varCount, ...) {
 			{
 				double data = va_arg(vararg,double);
 #ifdef DARIJIT
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
+				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
 #endif
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%d",data);
+				sprintf(buffer,"%f",data);
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
@@ -338,12 +338,12 @@ void clap_hookFuncBegin(int varCount, ...) {
 			{
 				char data = va_arg(vararg,char);
 #ifdef DARIJIT
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
+				printf("The parameter %s at beginning is %c of type %s:\n",varName,data,varType);
 #endif
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%d",data);
+				sprintf(buffer,"%c",data);
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
@@ -388,28 +388,28 @@ void clap_hookFuncEnd(int varCount, ...) {
 			if(varName[0] == ':') 
 			{
 				void *data = va_arg(vararg,void*);
-				castHelp( varType, &data);
+				
 #if 0
 				printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
 #endif                                          
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
-				if (varType == "int")
+				if(strcmp(varType,"int") ==0 )
 				{
-				sprintf(buffer,"%d",*(int*)data);
+					sprintf(buffer,"%d",*(int*)data);
 				}
-				else if(varType == "float")
+				else if(strcmp(varType,"float") ==0 )
 				{
-				sprintf(buffer,"%d",*(float*)data);
+					sprintf(buffer,"%f",*(float*)data);
 				}
-				else if (varType == "double")
+				else if(strcmp(varType,"double") ==0 )
 				{
-				sprintf(buffer,"%d",*(double*)data);
+					sprintf(buffer,"%f",*(double*)data);
 				}
-				else if (varType == "char")
+				else if(strcmp(varType,"char") ==0 )
 				{
-				sprintf(buffer,"%d",*(char*)data);
+					sprintf(buffer,"%c",*(char*)data);
 				}
 				fputs(buffer,fp);
 				fputs("\n",fp);
@@ -434,12 +434,12 @@ void clap_hookFuncEnd(int varCount, ...) {
 			{
 				float data = va_arg(vararg,float);
 #ifdef DARIJIT
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
+				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
 #endif
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%d",data);
+				sprintf(buffer,"%f",data);
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
@@ -448,12 +448,12 @@ void clap_hookFuncEnd(int varCount, ...) {
 			{
 				double data = va_arg(vararg,double);
 #ifdef DARIJIT
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
+				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
 #endif
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%d",data);
+				sprintf(buffer,"%f",data);
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
@@ -462,16 +462,16 @@ void clap_hookFuncEnd(int varCount, ...) {
 			{
 				char data = va_arg(vararg,char);
 #ifdef DARIJIT
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
+				printf("The parameter %s at beginning is %c of type %s:\n",varName,data,varType);
 #endif
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%d",data);
+				sprintf(buffer,"%c",data);
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
-			} 
+			}
 		fputs("\n",fp);
 		fclose(fp);	
 		}
