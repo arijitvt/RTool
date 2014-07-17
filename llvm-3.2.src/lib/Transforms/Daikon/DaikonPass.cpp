@@ -22,6 +22,58 @@ DaikonPass::DaikonPass():ModulePass(ID) {
 }
 
 
+//bool DaikonPass::runOnModule(Module &module) {
+//
+//        if(dumpppt && load) {
+//        	errs()<<"Both dumpppt and load can not be true at the same time \n";
+//        	return false;
+//        }
+//        if(dumpppt) {
+//        	generateProgramPoints(module);
+//        	errs()<<"Program Points are being generated\n";
+//        	return false;
+//        }
+//        if(load) {
+//        	loadProgramPoints(module);
+//        	errs()<<"Program points are loaded "<<programPoints.size()<<"\n";
+//        }
+//        populateGlobals(module);
+//	//displayGlobalVars();
+//        //if(load) {
+//        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
+//        //		Function *func = &*funcItr;
+//        //		string funcName(func->getName().trim().data());
+//        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
+//        //			//Temporarily stopping the hook for Store option
+//        //			//hookForStore(func);	
+//        //			hookAtFunctionStart(func);
+//        //			hookAtFunctionEnd(func);
+//        //			//Do not call insertDynamicCallAtGlobalAccess here.
+//        //			//It will jeoperdize the instrumentation.
+//        //		}
+//        //	}
+//        //}
+//        dumpDeclFile(module);
+//        //Insert the dynamic fake functions for the global variables
+//	//Temporarily closing this section
+//        //if(load) {
+//
+//        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
+//        //		Function *func = &*funcItr;
+//        //		string funcName(func->getName().trim().data());
+//        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
+//        //			insertDynamicCallAtGlobalAccess(func);
+//        //		}
+//        //	}
+//        //}
+//        return true;
+//}
+
+
+
+/**
+ * This function is openedup to test the type setting.
+ */
 bool DaikonPass::runOnModule(Module &module) {
 
         if(dumpppt && load) {
@@ -38,34 +90,7 @@ bool DaikonPass::runOnModule(Module &module) {
         	errs()<<"Program points are loaded "<<programPoints.size()<<"\n";
         }
         populateGlobals(module);
-	//displayGlobalVars();
-        //if(load) {
-        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
-        //		Function *func = &*funcItr;
-        //		string funcName(func->getName().trim().data());
-        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
-        //			//Temporarily stopping the hook for Store option
-        //			//hookForStore(func);	
-        //			hookAtFunctionStart(func);
-        //			hookAtFunctionEnd(func);
-        //			//Do not call insertDynamicCallAtGlobalAccess here.
-        //			//It will jeoperdize the instrumentation.
-        //		}
-        //	}
-        //}
         dumpDeclFile(module);
-        //Insert the dynamic fake functions for the global variables
-	//Temporarily closing this section
-        //if(load) {
-
-        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
-        //		Function *func = &*funcItr;
-        //		string funcName(func->getName().trim().data());
-        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
-        //			insertDynamicCallAtGlobalAccess(func);
-        //		}
-        //	}
-        //}
         return true;
 }
 
