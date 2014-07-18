@@ -111,10 +111,7 @@ void DaikonPass::populateGlobals(Module &module) {
 			}
 			string type1 = getTypeString(globalVar->getInitializer()->getType());
 			string type2 = getTypeString(globalVar->getType());
-			//if(type1 == "int" || type2 == "int**") {
-		       // if(type1 == "int" || type2 == "pointer") {
-		        	globalList.push_back(globalVar);
-		       // }
+			globalList.push_back(globalVar);
 		}
 
 	}
@@ -173,12 +170,14 @@ string DaikonPass::getTypeString(Type *type) {
 	switch(type->getTypeID()) {
 		case Type::IntegerTyID:{
 					       IntegerType *intType=static_cast<IntegerType*>(type);
-					       if(intType->getBitWidth() == 8) {
+					       int bitWidth = intType->getBitWidth();
+					       if(bitWidth == 8) {
 						       return CHAR_TYPE;
-					       }else if(intType->getBitWidth() == 32){
+					       }else if(bitWidth == 16) {
+					       		return SHORT_TYPE;
+					       }else if(bitWidth == 32){
 						       return INT_TYPE;
-					       }else if(intType->getBitWidth() == 64) {
-						       	errs()<<"This is the 64 bit integer procerssing"<<"\n";
+					       }else if(bitWidth == 64) {
 					       		return LONG_TYPE;
 					       }else {
 						       return INT_TYPE;
@@ -668,26 +667,59 @@ void DaikonPass::displayLoadedProgrampoints() {
 		errs() <<"Loaded Program point is : "<<StringRef(s)<<"\n";
 	}
 }
-/**
- *
- */
-string DaikonPass::getDeclTypeString(Type *ty) {
 
-	string returnString = "";
-	string repTypeString = getTypeString(ty) ;
-	if(repTypeString == "char") {
-		returnString = "int";
-	}else if(repTypeString == "float") {
-		returnString =  "double";
-	}else {
-		returnString = repTypeString;
+
+/**
+ * This function returns the rep-type of a type               
+ */
+string DaikonPass::getRepTypeString(Type *ty) {
+	string returnString  = "";
+	returnString = getTypeString(ty);
+	if(returnString == LONG_TYPE) {
+		return INT_TYPE;
+	} else if( returnString == CHAR_TYPE) {
+		return INT_TYPE;
+	} else if( returnString == SHORT_TYPE) {
+		return INT_TYPE;
 	}
+	errs()<<"Returning  " <<returnString<<"\n";
 	return returnString;
 }
 
-string DaikonPass::getDeclTypeString(Value *val) {
+/**
+ * This function returns the rep-type of a value
+ */
+
+string DaikonPass::getRepTypeString(Value *val) {
 	Type *ty = val->getType();
-	return getDeclTypeString(ty);
+	return getRepTypeString(ty);
+}
+
+/**
+ * This function returns the dec-type of a type                           
+ */
+string DaikonPass::getDecTypeString(Type *ty) {
+	return getTypeString(ty);
+
+//	string returnString = "";
+//	string repTypeString = getTypeString(ty) ;
+//	//if(repTypeString == "char") {
+//	//	returnString = "int";
+//	//}else if(repTypeString == "float") {
+//	//	returnString =  "double";
+//	//}else {
+//	//	returnString = repTypeString;
+//	//}
+//	return returnString;
+}
+
+/**
+ * This function returns the dec-type of a value
+ */
+
+string DaikonPass::getDecTypeString(Value *val) {
+	Type *ty = val->getType();
+	return getDecTypeString(ty);
 }
 
 /**
@@ -738,24 +770,10 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				putTabInFile(declFile,tabCount);
 				declFile<<"var-kind variable\n";
 				putTabInFile(declFile,tabCount);
-				string repTypeString = getDeclTypeString(v->getInitializer());
-				errs()<<"Name : "<<varName.c_str()<<"  " <<repTypeString<<"\n";
-
-				//For long/int64_t/long long data type
-				//rep-type is int
-				//and dec-type is long
-				if(repTypeString == LONG_TYPE) {
-					declFile<<"rep-type "<<"int"<<"\n";
-					putTabInFile(declFile,tabCount);
-					declFile<<"dec-type "<<repTypeString<<"\n";
-				
-				}else {
-					declFile<<"rep-type "<<repTypeString<<"\n";
-					//declFile<<"rep-type "<<"int"<<"\n";
-					putTabInFile(declFile,tabCount);
-					declFile<<"dec-type "<<getTypeString(v->getInitializer())<<"\n";
-					//declFile<<"dec-type "<<"int"<<"\n";
-				}
+				declFile<<"rep-type "<<getRepTypeString(v->getInitializer())<<"\n";;
+				putTabInFile(declFile,tabCount);
+				declFile<<"dec-type "<<getDecTypeString(v->getInitializer())<<"\n";
+			
 			}
 			//Process function Params
 			for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
@@ -776,12 +794,9 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				putTabInFile(declFile,tabCount);
 				declFile<<"var-kind variable\n";
 				putTabInFile(declFile,tabCount);
-				string repTypeString = getDeclTypeString(v);
-				declFile<<"rep-type "<<repTypeString<<"\n";
-				//declFile<<"rep-type "<<"int"<<"\n";
+				declFile<<"rep-type "<<getRepTypeString(v)<"\n";
 				putTabInFile(declFile,tabCount);
-				declFile<<"dec-type "<<getTypeString(v)<<"\n";
-				//declFile<<"dec-type "<<"int"<<"\n";
+				declFile<<"dec-type "<<getDecTypeString(v)<<"\n";
 				putTabInFile(declFile,tabCount);
 				declFile<<"flags is_param\n";
 			}
@@ -797,7 +812,7 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				putTabInFile(declFile,tabCount);
 				declFile<<"var-kind variable\n";
 				putTabInFile(declFile,tabCount);
-				string repTypeString = getDeclTypeString(func->getReturnType());
+				string repTypeString = getRepTypeString(func->getReturnType());
 				declFile<<"rep-type "<<repTypeString<<"\n";
 				putTabInFile(declFile,tabCount);
 				declFile<<"dec-type "<<returnType<<"\n";

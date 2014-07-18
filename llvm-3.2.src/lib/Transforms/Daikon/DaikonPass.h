@@ -84,9 +84,14 @@ class DaikonPass:public ModulePass {
 		void handleStoreInst(StoreInst *storeInst);
 		void blockBreaker(Instruction *);
 
-		//Get Decl Type String
-		string getDeclTypeString(Value *val);
-		string getDeclTypeString(Type *ty);
+
+		//Get Rep Type String
+		string getRepTypeString(Value *val);
+		string getRepTypeString(Type *ty);
+
+		//Get Dec Type String
+		string getDecTypeString(Value *val);
+		string getDecTypeString(Type *ty);
 
 		//Type related  function.
 		bool isSupportedType(Value *val);
@@ -131,9 +136,10 @@ class DummyVarInsertionPass:public ModulePass {
 };
 
 
+static const string CHAR_TYPE 	= "char";
+static const string SHORT_TYPE 	= "short";
 static const string INT_TYPE 	= "int";
 static const string LONG_TYPE 	= "long";
-static const string CHAR_TYPE 	= "char";
 static const string DOUBLE_TYPE = "double";
 
 
