@@ -141,6 +141,7 @@ static const string SHORT_TYPE 	= "short";
 static const string INT_TYPE 	= "int";
 static const string LONG_TYPE 	= "long";
 static const string DOUBLE_TYPE = "double";
+static const string FLOAT_TYPE  = "float";
 
 
 #endif

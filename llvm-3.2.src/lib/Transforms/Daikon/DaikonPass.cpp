@@ -185,11 +185,11 @@ string DaikonPass::getTypeString(Type *type) {
 				       }
 
 		case Type::FloatTyID:{
-					     return "float";
+					     return FLOAT_TYPE;
 				     }
 
 		case Type::DoubleTyID:  {
-						return "double";
+						return DOUBLE_TYPE;
 					}
 
 		case Type::StructTyID: {
@@ -681,6 +681,8 @@ string DaikonPass::getRepTypeString(Type *ty) {
 		return INT_TYPE;
 	} else if( returnString == SHORT_TYPE) {
 		return INT_TYPE;
+	} else if (returnString == FLOAT_TYPE) {
+		return DOUBLE_TYPE;
 	}
 	errs()<<"Returning  " <<returnString<<"\n";
 	return returnString;
