@@ -15,6 +15,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/DerivedTypes.h"
 
 #include "llvm/Support/CommandLine.h"
 
@@ -97,20 +98,40 @@ class DaikonPass:public ModulePass {
 		bool isSupportedType(Value *val);
 		bool isSupportedType(Type *type);
 
+		//Dump the structure nexted members
+		void dumpStructureMembers(fstream &declFile,
+				Value *structElement,Type *ty,int tabCount,bool isGlobalStructure);
+
+		//Next two functions are in testing condition.
+		Type* getGlobalType(PointerType *ty) ;
+
 	private:
 		vector<Value*>  globalList;
 		vector<string> 	doNotInstrumentFunctions;
 		vector<string> programPoints;
 		Type *voidType ;
 		IntegerType *int8Type ; 	
+		IntegerType *int16Type;
 		IntegerType *int32Type;
 		IntegerType *int64Type;
-		PointerType *ptr8Type ; 
+		
+		Type *floatType;
+		Type *doubleType;
+
+		StructType *structType;
+
+		PointerType *ptr8Type ;
+		PointerType *ptr16Type;
 		PointerType *ptr32Type;
 		PointerType *ptr64Type;
- 
+
+		PointerType *ptrFloatType;
+		PointerType *ptrDoubleType;
+
 		PointerType *ptrPtr32Type;
 		PointerType *ptrPtr64Type;
+
+		PointerType *ptrStructType;
 
 		FunctionType *functionType;
 		static bool isInit;
@@ -136,6 +157,8 @@ class DummyVarInsertionPass:public ModulePass {
 };
 
 
+
+//Primitive types
 static const string CHAR_TYPE 	= "char";
 static const string SHORT_TYPE 	= "short";
 static const string INT_TYPE 	= "int";
@@ -143,5 +166,7 @@ static const string LONG_TYPE 	= "long";
 static const string DOUBLE_TYPE = "double";
 static const string FLOAT_TYPE  = "float";
 
+//Nested Types 
+static const string STRUCT_TYPE = "struct";
 
 #endif

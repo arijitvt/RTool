@@ -137,14 +137,28 @@ void DaikonPass::doInit(Module *module) {
 	
 	voidType = Type::getVoidTy(module->getContext());
 	int8Type  = IntegerType::get(module->getContext(),8);
+	int16Type  = IntegerType::get(module->getContext(),16);
 	int32Type = IntegerType::get(module->getContext(),32);
 	int64Type = IntegerType::get(module->getContext(),64);
+
+	floatType = Type::getFloatTy(module->getContext());
+	doubleType = Type::getDoubleTy(module->getContext());
+
+	structType = StructType::create(module->getContext());
+	
 	ptr8Type  = PointerType::get(int8Type,0);
+	ptr16Type = PointerType::get(int16Type,0);
 	ptr32Type = PointerType::get(int32Type,0);
 	ptr64Type = PointerType::get(int64Type,0);
 
+	ptrFloatType = PointerType::get(floatType,0);
+	ptrDoubleType = PointerType::get(doubleType,0);
+
+
 	ptrPtr32Type = PointerType::get(ptr32Type,0);
 	ptrPtr64Type = PointerType::get(ptr64Type,0);
+
+	ptrStructType = PointerType::get(structType,0);
 
 	functionType = FunctionType::get(voidType,true);
 	isInit = true;
@@ -193,7 +207,7 @@ string DaikonPass::getTypeString(Type *type) {
 					}
 
 		case Type::StructTyID: {
-					       return "structure";
+					       return STRUCT_TYPE;
 				       }
 
 		case Type::VectorTyID: {
@@ -222,55 +236,6 @@ string DaikonPass::getTypeString(Type *type) {
 }
 
 
-#if 0
-//Old getTypeString is decomissioned
-
-string DaikonPass::getTypeString(Type *type) {
-	//errs()<<"Type is :"<<*value->getType()<<"\n";
-	switch(type->getTypeID()) {
-		case Type::IntegerTyID:{
-					       IntegerType *intType=static_cast<IntegerType*>(type);
-					       if(intType->getBitWidth() == 8) {
-						       return "char";
-					       }else if(intType->getBitWidth() == 32|| 
-							       intType->getBitWidth() == 64){
-						       return "int";
-					       }else {
-						       return "int";
-					       }
-				       }
-
-		case Type::FloatTyID:{
-					     return "float";
-				     }
-
-		case Type::DoubleTyID:  {
-						return "double";
-					}
-
-		case Type::PointerTyID:{
-					       return "pointer";
-					      // PointerType *ptrType = static_cast<PointerType*>(type);
-					      // if(ptrType  ==  ptr32Type || ptrType == ptr64Type) {
-					      //         return "int*";
-					      // }else if(ptrType == ptr8Type) {
-					      // 		return "char*";
-					      // }else if(ptrType == ptrPtr32Type || ptrType == ptrPtr64Type) {
-					      // 		return "int**";
-					      // }else {
-					      //         return "pointer";
-					      // }
-				       }
-		default:  {
-					//errs()<<"Unable to identify type : "<<type->getTypeID()<<"\n";
-			}
-
-	}
-	return "unknown";
-}
-
-#endif
-
 bool DaikonPass::isSupportedType(Value *val) {
 	return isSupportedType(val->getType());
 }
@@ -281,8 +246,8 @@ bool DaikonPass::isSupportedType(Type *type) {
 		case Type::IntegerTyID:
 		case Type::FloatTyID:
 		case Type::DoubleTyID:  
+		case Type::StructTyID: 
 			//case Type::ArrayTyID: 
-			// case Type::StructTyID: 
 			// case Type::VectorTyID: 
 			return true;
 
@@ -684,7 +649,7 @@ string DaikonPass::getRepTypeString(Type *ty) {
 	} else if (returnString == FLOAT_TYPE) {
 		return DOUBLE_TYPE;
 	}
-	errs()<<"Returning  " <<returnString<<"\n";
+	//errs()<<"Returning  " <<returnString<<"\n";
 	return returnString;
 }
 
@@ -698,21 +663,34 @@ string DaikonPass::getRepTypeString(Value *val) {
 }
 
 /**
+ * This is another test function
+ */
+
+Type*  DaikonPass::getGlobalType(PointerType *ty) {
+	return ty->getContainedType(0);
+//	if(ty == ptrStructType) {
+//		return structType;
+//	}else if(ty = ptr8Type) {
+//		return int8Type;
+//	}else if(ty == ptr16Type) {
+//		return int16Type;
+//	}else if(ty == ptr32Type) {
+//		return int32Type;
+//	}else if(ty == ptr64Type) {
+//		return int64Type;
+//	}else if(ty == ptrFloatType) {
+//		return floatType;
+//	}else if (ty == ptrDoubleType) {
+//		return doubleType;
+//	}
+//	return NULL;                                                                                                                                
+}
+
+/**
  * This function returns the dec-type of a type                           
  */
 string DaikonPass::getDecTypeString(Type *ty) {
 	return getTypeString(ty);
-
-//	string returnString = "";
-//	string repTypeString = getTypeString(ty) ;
-//	//if(repTypeString == "char") {
-//	//	returnString = "int";
-//	//}else if(repTypeString == "float") {
-//	//	returnString =  "double";
-//	//}else {
-//	//	returnString = repTypeString;
-//	//}
-//	return returnString;
 }
 
 /**
@@ -722,6 +700,56 @@ string DaikonPass::getDecTypeString(Type *ty) {
 string DaikonPass::getDecTypeString(Value *val) {
 	Type *ty = val->getType();
 	return getDecTypeString(ty);
+}
+
+//Handle Structure members                                                                                 
+void DaikonPass::dumpStructureMembers(fstream &declFile,
+		Value *structElement,Type *ty,int tabCount,bool isGlobalStructure) {
+	string structCommonVarName = "var";                                                            
+        if(StructType *structType = dyn_cast<StructType>(ty)) {
+		StringRef structVariableName  = structElement->getName();
+		int counter = 0; 
+		for(Type::subtype_iterator eleItr = structType->element_begin() ;
+				eleItr != structType->element_end(); ++eleItr,++counter) {
+			string elementName = structVariableName.trim().str()+"."+structCommonVarName+"_"+to_string(counter);
+			Type *elementType = *eleItr;
+			string elementRepType = getRepTypeString(elementType);
+			string elementDecType = getDecTypeString(elementType);
+			
+			putTabInFile(declFile,tabCount);
+			if(isGlobalStructure) {
+			declFile<<"variable ::"<<elementName<<"\n";
+			}else {
+				declFile<<"variable "<<elementName<<"\n";
+			}
+			tabCount =2;
+			putTabInFile(declFile,tabCount);
+			declFile<<"var-kind variable\n";
+			putTabInFile(declFile,tabCount);
+			declFile<<"rep-type "<<elementRepType<<"\n";;
+			putTabInFile(declFile,tabCount);
+			declFile<<"dec-type "<<elementDecType<<"\n";
+			if(!isGlobalStructure) {
+				putTabInFile(declFile,tabCount);
+				declFile<<"flags is_param\n";
+			}
+		}
+	}
+      //  StringRef structName  = ty->getName();
+
+      //  errs()<<"Name of the structure is : "<<structName<<" Name of the var :"<<structElement->getName()<<"\n";
+
+	//string varName = v->getName().trim().str();
+	//tabCount = 1;
+	//putTabInFile(declFile,tabCount);
+	//declFile<<"variable ::"<<varName<<"\n";
+	//tabCount =2;
+	//putTabInFile(declFile,tabCount);
+	//declFile<<"var-kind variable\n";
+	//putTabInFile(declFile,tabCount);
+	//declFile<<"rep-type "<<repTypeString<<"\n";;
+	//putTabInFile(declFile,tabCount);
+	//declFile<<"dec-type "<<getDecTypeString(v->getInitializer())<<"\n";
 }
 
 /**
@@ -760,21 +788,29 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 			for(vector<Value*>::iterator globalItr = globalList.begin(); globalItr != globalList.end(); ++globalItr) {				
 				GlobalVariable *v = static_cast<GlobalVariable*>(*globalItr);
 				Value *globalValue = v->getInitializer();
-				errs()<<"Processing the global variable "<<*globalValue<<"\n";
 				if( globalValue  && !isSupportedType(globalValue)) {
 					continue;
 				}
-				string varName = v->getName().trim().str();
-				tabCount = 1;
-				putTabInFile(declFile,tabCount);
-				declFile<<"variable ::"<<varName<<"\n";
-				tabCount =2;
-				putTabInFile(declFile,tabCount);
-				declFile<<"var-kind variable\n";
-				putTabInFile(declFile,tabCount);
-				declFile<<"rep-type "<<getRepTypeString(v->getInitializer())<<"\n";;
-				putTabInFile(declFile,tabCount);
-				declFile<<"dec-type "<<getDecTypeString(v->getInitializer())<<"\n";
+				//string repTypeString = getRepTypeString(v->getInitializer());
+				Type *ty = getGlobalType(v->getType());
+				string repTypeString = getRepTypeString(ty);
+				//Nested structure members should be treated differently
+				if(repTypeString == STRUCT_TYPE ) {
+					dumpStructureMembers(declFile,v,ty,1,true);
+				
+				}else {
+					string varName = v->getName().trim().str();
+					tabCount = 1;
+					putTabInFile(declFile,tabCount);
+					declFile<<"variable ::"<<varName<<"\n";
+					tabCount =2;
+					putTabInFile(declFile,tabCount);
+					declFile<<"var-kind variable\n";
+					putTabInFile(declFile,tabCount);
+					declFile<<"rep-type "<<repTypeString<<"\n";;
+					putTabInFile(declFile,tabCount);
+					declFile<<"dec-type "<<getDecTypeString(ty)<<"\n";
+				}
 			
 			}
 			//Process function Params
@@ -796,7 +832,7 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				putTabInFile(declFile,tabCount);
 				declFile<<"var-kind variable\n";
 				putTabInFile(declFile,tabCount);
-				declFile<<"rep-type "<<getRepTypeString(v)<"\n";
+				declFile<<"rep-type "<<getRepTypeString(v)<<"\n";
 				putTabInFile(declFile,tabCount);
 				declFile<<"dec-type "<<getDecTypeString(v)<<"\n";
 				putTabInFile(declFile,tabCount);
