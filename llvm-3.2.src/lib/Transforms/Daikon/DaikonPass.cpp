@@ -22,58 +22,57 @@ DaikonPass::DaikonPass():ModulePass(ID) {
 }
 
 
-//bool DaikonPass::runOnModule(Module &module) {
-//
-//        if(dumpppt && load) {
-//        	errs()<<"Both dumpppt and load can not be true at the same time \n";
-//        	return false;
-//        }
-//        if(dumpppt) {
-//        	generateProgramPoints(module);
-//        	errs()<<"Program Points are being generated\n";
-//        	return false;
-//        }
-//        if(load) {
-//        	loadProgramPoints(module);
-//        	errs()<<"Program points are loaded "<<programPoints.size()<<"\n";
-//        }
-//        populateGlobals(module);
-//	//displayGlobalVars();
-//        //if(load) {
-//        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
-//        //		Function *func = &*funcItr;
-//        //		string funcName(func->getName().trim().data());
-//        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
-//        //			//Temporarily stopping the hook for Store option
-//        //			//hookForStore(func);	
-//        //			hookAtFunctionStart(func);
-//        //			hookAtFunctionEnd(func);
-//        //			//Do not call insertDynamicCallAtGlobalAccess here.
-//        //			//It will jeoperdize the instrumentation.
-//        //		}
-//        //	}
-//        //}
-//        dumpDeclFile(module);
-//        //Insert the dynamic fake functions for the global variables
-//	//Temporarily closing this section
-//        //if(load) {
-//
-//        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
-//        //		Function *func = &*funcItr;
-//        //		string funcName(func->getName().trim().data());
-//        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
-//        //			insertDynamicCallAtGlobalAccess(func);
-//        //		}
-//        //	}
-//        //}
-//        return true;
-//}
+bool DaikonPass::runOnModule(Module &module) {
+
+        if(dumpppt && load) {
+        	errs()<<"Both dumpppt and load can not be true at the same time \n";
+        	return false;
+        }
+        if(dumpppt) {
+        	generateProgramPoints(module);
+        	errs()<<"Program Points are being generated\n";
+        	return false;
+        }
+        if(load) {
+        	loadProgramPoints(module);
+        	errs()<<"Program points are loaded "<<programPoints.size()<<"\n";
+        }
+        populateGlobals(module);
+	//displayGlobalVars();
+        if(load) {
+        	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
+        		Function *func = &*funcItr;
+        		string funcName(func->getName().trim().data());
+        		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
+        			//Temporarily stopping the hook for Store option
+        			hookAtFunctionStart(func);
+        			hookAtFunctionEnd(func);
+        			//Do not call insertDynamicCallAtGlobalAccess here.
+        			//It will jeoperdize the instrumentation.
+        		}
+        	}
+        }
+        dumpDeclFile(module);
+        //Insert the dynamic fake functions for the global variables
+	//Temporarily closing this section
+        //if(load) {
+
+        //	for(Module::iterator funcItr = module.begin(); funcItr != module.end(); ++funcItr) {
+        //		Function *func = &*funcItr;
+        //		string funcName(func->getName().trim().data());
+        //		if(find(programPoints.begin(), programPoints.end(),funcName) != programPoints.end()) {
+        //			insertDynamicCallAtGlobalAccess(func);
+        //		}
+        //	}
+        //}
+        return true;
+}
 
 
 
 /**
  * This function is openedup to test the type setting.
- */
+
 bool DaikonPass::runOnModule(Module &module) {
 
         if(dumpppt && load) {
@@ -93,6 +92,8 @@ bool DaikonPass::runOnModule(Module &module) {
         dumpDeclFile(module);
         return true;
 }
+
+**/
 
 
 /**
@@ -133,6 +134,8 @@ Value* DaikonPass::getValueForString(StringRef variableName,Module *module) {
 	Value *val = new GlobalVariable(*module,valueName->getType(), true, GlobalValue::InternalLinkage,valueName);
 	return val;
 }
+
+
 void DaikonPass::doInit(Module *module) {
 	
 	voidType = Type::getVoidTy(module->getContext());
@@ -215,7 +218,7 @@ string DaikonPass::getTypeString(Type *type) {
 				       }
 
 		case Type::ArrayTyID: {
-					      return "array";
+					      return ARRAY_TYPE;
 
 				      }
 		case Type::PointerTyID:{
@@ -225,7 +228,7 @@ string DaikonPass::getTypeString(Type *type) {
 					       }else if(ptrType == ptr8Type) {
 						       return "char*";
 					       }
-					       return "pointer";
+					       return POINTER_TYPE;
 				       }
 		default:  {
 				  return "invalid";
@@ -247,7 +250,7 @@ bool DaikonPass::isSupportedType(Type *type) {
 		case Type::FloatTyID:
 		case Type::DoubleTyID:  
 		case Type::StructTyID: 
-			//case Type::ArrayTyID: 
+		case Type::ArrayTyID: 
 			// case Type::VectorTyID: 
 			return true;
 
@@ -266,54 +269,6 @@ void DaikonPass::putTabInFile(fstream &stream, int tabCount) {
 	}
 }
 
-/**
- * THIS METHOD IS NOT IN USE
- * This method will insert hook before and after every Store instruction 
- **/
-void DaikonPass::hookForStore(Function *func) {
-	StringRef funcName = func->getName();
-	if(doNotInstrument(funcName)) return;	
-
-	Module *module = func->getParent();
-	if(!isInit) {
-		doInit(module);
-	}
-	
-	vector<Type*> paramType;
-	paramType.push_back(ptr8Type);
-	//paramType.push_back(ptr8Type);
-
-	FunctionType *hookAfterFunctionType = FunctionType::get(voidType,paramType,false);
-	Function *hookAfterFunction = cast<Function>(module->getOrInsertFunction("hookAfter",hookAfterFunctionType));
-
-
-        /**************** This is not being used anymore
-	//Right now I am stopping before fact
-	//Function *hookBeforeFunction = cast<Function>(module->getOrInsertFunction("clap_hookBefore",functionType));
-	Constant *argCount = ConstantInt::get(module->getContext(), APInt(32,1,true));
-	Function *hookAfterFunction = cast<Function>(module->getOrInsertFunction("hookAfter",functionType));
-	*/
-
-        for(inst_iterator instItr = inst_begin(func); instItr != inst_end(func); ++instItr) {
-        	Instruction *inst = &(*instItr);
-        	if(isa<StoreInst>(*instItr)) {
-        		errs()<<*inst<<"\n";
-        		StoreInst *storeInst = static_cast<StoreInst*>(inst);
-        		Value *operand = storeInst->getPointerOperand();
-        		if(isGlobal(operand)) {
-        			vector<Value*> argList;
-        			argList.push_back(CastInst::CreatePointerCast(operand,ptr8Type,"Value",storeInst));
-        			//Value *v = getValueForString(operand->getName(), module);
-        		       // argList.push_back(CastInst::CreatePointerCast(v,ptr8Type,"Name",storeInst));
-			       // errs()<<"Pushing back the value : "<<operand->getName()<<"\n";
-        			
-        		       //Instruction *hookBeforeInstruction = CallInst::Create(hookBeforeFunction,argList,"",storeInst);
-				Instruction *hookAfterInstruction  = CallInst::Create(hookAfterFunction,argList);
-        			hookAfterInstruction->insertAfter(storeInst);
-        		}
-        	}
-        }
-}
 
 /**
  * This Function will hook at the beginning of every Function
@@ -724,32 +679,46 @@ void DaikonPass::dumpStructureMembers(fstream &declFile,
 			}
 			tabCount =2;
 			putTabInFile(declFile,tabCount);
-			declFile<<"var-kind variable\n";
+			declFile<<"var-kind field "<<elementName<<"\n";
 			putTabInFile(declFile,tabCount);
 			declFile<<"rep-type "<<elementRepType<<"\n";;
 			putTabInFile(declFile,tabCount);
 			declFile<<"dec-type "<<elementDecType<<"\n";
-			if(!isGlobalStructure) {
-				putTabInFile(declFile,tabCount);
-				declFile<<"flags is_param\n";
-			}
+			//if(!isGlobalStructure) {
+			//	putTabInFile(declFile,tabCount);
+			//	declFile<<"flags is_param\n";
+			//}
 		}
 	}
-      //  StringRef structName  = ty->getName();
+}
 
-      //  errs()<<"Name of the structure is : "<<structName<<" Name of the var :"<<structElement->getName()<<"\n";
 
-	//string varName = v->getName().trim().str();
-	//tabCount = 1;
-	//putTabInFile(declFile,tabCount);
-	//declFile<<"variable ::"<<varName<<"\n";
-	//tabCount =2;
-	//putTabInFile(declFile,tabCount);
-	//declFile<<"var-kind variable\n";
-	//putTabInFile(declFile,tabCount);
-	//declFile<<"rep-type "<<repTypeString<<"\n";;
-	//putTabInFile(declFile,tabCount);
-	//declFile<<"dec-type "<<getDecTypeString(v->getInitializer())<<"\n";
+/**                                                                                                                                     
+ * Dump the various different types of Array
+ */
+
+void DaikonPass::dumpArrays(fstream &declFile,
+				Value *arrayElement, Type *ty,int tabCount,bool isGlobalArray) {	
+	if(declFile.is_open()) {
+		string    elementName = arrayElement->getName().trim().str();
+		putTabInFile(declFile,tabCount);
+		if(isGlobalArray) {
+			declFile<<"variable ::"<<elementName<<"\n";
+		}else {
+			declFile<<"variable "<<elementName<<"\n";
+		}
+		tabCount =2;
+		putTabInFile(declFile,tabCount);
+		declFile<<"var-kind variable \n";
+		putTabInFile(declFile,tabCount);
+		declFile<<"rep-type hashcode\n";;
+		putTabInFile(declFile,tabCount);
+		SequentialType *ptrType = dyn_cast<SequentialType>(ty);
+		string typeString = getTypeString(ptrType->getElementType());
+		declFile<<"dec-type "<<typeString<<"*\n";
+		putTabInFile(declFile,tabCount);
+		declFile<<"flags non_null\n";
+	}
 }
 
 /**
@@ -798,6 +767,8 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				if(repTypeString == STRUCT_TYPE ) {
 					dumpStructureMembers(declFile,v,ty,1,true);
 				
+				}else if (repTypeString == ARRAY_TYPE){
+					dumpArrays(declFile,v,ty,1,true);
 				}else {
 					string varName = v->getName().trim().str();
 					tabCount = 1;
@@ -821,28 +792,34 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				string varName = v->getName().trim().str();
 				string typeString = getTypeString(v);
 				StringRef typeStringRef(typeString);
-				/**
-				 * We are not reporting anything other than int.
-				 * So doing this filtering
-				 */
-				tabCount = 1;
-				putTabInFile(declFile,tabCount);
-				declFile<<"variable "<<varName<<"\n";
-				tabCount = 2;
-				putTabInFile(declFile,tabCount);
-				declFile<<"var-kind variable\n";
-				putTabInFile(declFile,tabCount);
-				declFile<<"rep-type "<<getRepTypeString(v)<<"\n";
-				putTabInFile(declFile,tabCount);
-				declFile<<"dec-type "<<getDecTypeString(v)<<"\n";
-				putTabInFile(declFile,tabCount);
-				declFile<<"flags is_param\n";
+				errs()<<"Type string for the argument is : "<<typeStringRef<<"\n";
+				if(typeString == POINTER_TYPE) {
+					PointerType *ptrType = dyn_cast<PointerType>(v->getType());
+					if(arg->hasByValAttr() && 
+							getTypeString(ptrType->getContainedType(0)) == STRUCT_TYPE) {
+						dumpStructureMembers(declFile,v,ptrType->getContainedType(0),1,false);
+					}
+				}else {
+					tabCount = 1;
+					putTabInFile(declFile,tabCount);
+					declFile<<"variable "<<varName<<"\n";
+					tabCount = 2;
+					putTabInFile(declFile,tabCount);
+					declFile<<"var-kind variable\n";
+					putTabInFile(declFile,tabCount);
+					declFile<<"rep-type "<<getRepTypeString(v)<<"\n";
+					putTabInFile(declFile,tabCount);
+					declFile<<"dec-type "<<getDecTypeString(v)<<"\n";
+					putTabInFile(declFile,tabCount);
+					declFile<<"flags is_param\n";
+				}
 			}
 
 			if(EntryOrExit == "EXIT") {
 			    string returnType = getTypeString(func->getReturnType());
 			   // if(returnType == "int") {
 			   if(isSupportedType(func->getReturnType())) {
+
 				tabCount = 1;
 				putTabInFile(declFile,tabCount);
 				declFile<<"variable return\n";

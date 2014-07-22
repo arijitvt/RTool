@@ -48,9 +48,6 @@ class DaikonPass:public ModulePass {
                 void hookAtFunctionEnd(Function *);
 		void  insertDynamicCallAtGlobalAccess(Function *);
                 
-		//hookForStore is not in use 
-		void hookForStore(Function *);
-                
 		//Program PointGeneration
 		void generateProgramPoints(Module &);
 		void loadProgramPoints(Module &);
@@ -102,7 +99,12 @@ class DaikonPass:public ModulePass {
 		void dumpStructureMembers(fstream &declFile,
 				Value *structElement,Type *ty,int tabCount,bool isGlobalStructure);
 
-		//Next two functions are in testing condition.
+		//Dump the various different types of Array
+		void dumpArrays(fstream &declFile,
+				Value *arrayElement, Type *ty,int tabCount,bool isGlobalArray);
+
+		//Get the type of the global variables 
+		//as they are by default pointer type 
 		Type* getGlobalType(PointerType *ty) ;
 
 	private:
@@ -168,5 +170,11 @@ static const string FLOAT_TYPE  = "float";
 
 //Nested Types 
 static const string STRUCT_TYPE = "struct";
+
+//Sequential Types
+static const string ARRAY_TYPE 	= "array";
+
+//Pointer Type
+static const string POINTER_TYPE = "pointer";
 
 #endif
