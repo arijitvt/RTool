@@ -103,9 +103,12 @@ class DaikonPass:public ModulePass {
 		void dumpArrays(fstream &declFile,
 				Value *arrayElement, Type *ty,int tabCount,bool isGlobalArray);
 
+
 		//Get the type of the global variables 
 		//as they are by default pointer type 
 		Type* getGlobalType(PointerType *ty) ;
+
+		string getArrayElementType(Type *ty);
 
 	private:
 		vector<Value*>  globalList;

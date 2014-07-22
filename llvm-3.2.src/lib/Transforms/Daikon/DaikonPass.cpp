@@ -692,6 +692,14 @@ void DaikonPass::dumpStructureMembers(fstream &declFile,
 	}
 }
 
+string DaikonPass::getArrayElementType(Type *ty) {
+	if(ty->isArrayTy()) {
+		ArrayType *arrTy = dyn_cast<ArrayType>(ty);
+		return getArrayElementType(arrTy->getElementType());
+	}
+	return getTypeString(ty);
+}
+
 
 /**                                                                                                                                     
  * Dump the various different types of Array
@@ -701,21 +709,52 @@ void DaikonPass::dumpArrays(fstream &declFile,
 				Value *arrayElement, Type *ty,int tabCount,bool isGlobalArray) {	
 	if(declFile.is_open()) {
 		string    elementName = arrayElement->getName().trim().str();
+		//Handle the array pointer iteself
 		putTabInFile(declFile,tabCount);
 		if(isGlobalArray) {
 			declFile<<"variable ::"<<elementName<<"\n";
 		}else {
 			declFile<<"variable "<<elementName<<"\n";
 		}
-		tabCount =2;
+		tabCount = 2;
 		putTabInFile(declFile,tabCount);
 		declFile<<"var-kind variable \n";
-		putTabInFile(declFile,tabCount);
-		declFile<<"rep-type hashcode\n";;
+		putTabInFile(declFile,tabCount);                      
+		declFile<<"rep-type hashcode\n";
 		putTabInFile(declFile,tabCount);
 		SequentialType *ptrType = dyn_cast<SequentialType>(ty);
-		string typeString = getTypeString(ptrType->getElementType());
+		//string typeString = getTypeString(ptrType->getElementType());
+		string typeString = getArrayElementType(ty);
 		declFile<<"dec-type "<<typeString<<"*\n";
+		putTabInFile(declFile,tabCount);
+		declFile<<"flags non_null\n";
+
+		tabCount = 1;
+		putTabInFile(declFile,tabCount);
+		if(isGlobalArray) {
+			declFile<<"variable ::"<<elementName<<"[..]\n";
+		}else {
+			declFile<<"variable "<<elementName<<"[..]\n";
+		}
+		
+		tabCount = 2;
+		putTabInFile(declFile,tabCount);
+		declFile<<"var-kind "<<getTypeString(ty)<<"\n";
+		putTabInFile(declFile,tabCount);
+		if(isGlobalArray) {
+			declFile<<"enclosing-var ::"<<elementName<<"\n";;
+		} else {
+			declFile<<"enclosing-var "<<elementName<<"\n";;
+		}
+		putTabInFile(declFile,tabCount);
+		declFile<<"reference-type offset\n";
+		putTabInFile(declFile,tabCount);
+		declFile<<"array 1\n";
+		
+		putTabInFile(declFile,tabCount);
+		declFile<<"rep-type "<<getRepTypeString(ptrType->getElementType())<<"[]\n";
+		putTabInFile(declFile,tabCount);
+		declFile<<"dec-type "<<typeString<<"[]\n";
 		putTabInFile(declFile,tabCount);
 		declFile<<"flags non_null\n";
 	}
