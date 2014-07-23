@@ -287,6 +287,18 @@ void clap_hookFuncBegin(int varCount, ...) {
 				{
 					sprintf(buffer,"%c",*(char*)data);
 				}
+				else if(strcmp(varType,"short") ==0 )
+				{
+					sprintf(buffer,"%c",*(short*)data);
+				}
+				else if(strcmp(varType,"long") ==0 )
+				{
+					sprintf(buffer,"%ld",*(long*)data);
+				}
+				//else if(strcmp(varType,"struct") ==0 )
+				//{
+				//	sprintf(buffer,"%c",*(struct*)data);
+				//} 
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
@@ -308,7 +320,7 @@ void clap_hookFuncBegin(int varCount, ...) {
 			}
                         else if(strcmp(varType,"float") ==0 )
 			{
-				float data = va_arg(vararg,float);
+				double data = va_arg(vararg,double); //float is promoted to double when passed through va_arg
 #ifdef DARIJIT
 				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
 #endif
@@ -336,7 +348,7 @@ void clap_hookFuncBegin(int varCount, ...) {
 			} 
 			else if(strcmp(varType,"char") ==0 )
 			{
-				char data = va_arg(vararg,char);
+				int data = va_arg(vararg,int);
 #ifdef DARIJIT
 				printf("The parameter %s at beginning is %c of type %s:\n",varName,data,varType);
 #endif
@@ -347,9 +359,50 @@ void clap_hookFuncBegin(int varCount, ...) {
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
-			} 
-				
-		
+			}
+			else if(strcmp(varType,"short") ==0 )
+			{
+				int data = va_arg(vararg,int);
+#ifdef DARIJIT
+				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
+#endif
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%c",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}
+			else if(strcmp(varType,"long") ==0 )
+			{
+				long data = va_arg(vararg,long);
+#ifdef DARIJIT
+				printf("The parameter %s at beginning is %ld of type %s:\n",varName,data,varType);
+#endif
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%ld",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}	
+	                //else if(strcmp(varType,"struct") ==0 )
+			//{
+			//	struct data = va_arg(vararg,struct);
+#ifdef DARIJIT
+			//	printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
+#endif
+			//	fputs(varName,fp);
+			//	fputs("\n",fp);
+			//	memset(buffer,'\0',SMALL);
+			//	sprintf(buffer,"%c",data);
+			//	fputs(buffer,fp);
+			//	fputs("\n",fp);
+			//	fputs("1\n",fp);
+			//}
+
 		fputs("\n",fp);
 		fclose(fp);
 		++callStackCounbter;
@@ -432,7 +485,7 @@ void clap_hookFuncEnd(int varCount, ...) {
 			}
                         else if(strcmp(varType,"float") ==0 )
 			{
-				float data = va_arg(vararg,float);
+				double data = va_arg(vararg,double);
 #ifdef DARIJIT
 				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
 #endif
@@ -460,7 +513,7 @@ void clap_hookFuncEnd(int varCount, ...) {
 			} 
 			else if(strcmp(varType,"char") ==0 )
 			{
-				char data = va_arg(vararg,char);
+				int data = va_arg(vararg,int);
 #ifdef DARIJIT
 				printf("The parameter %s at beginning is %c of type %s:\n",varName,data,varType);
 #endif
