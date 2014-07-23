@@ -738,8 +738,18 @@ void DaikonPass::dumpArrays(fstream &declFile,
 		putTabInFile(declFile,tabCount);
 		declFile<<"var-kind variable \n";
 		if(typeString == CHAR_TYPE) {
+			putTabInFile(declFile,tabCount);
+			declFile<<"reference-type offset\n";
 
-		} else {
+			putTabInFile(declFile,tabCount);
+			declFile<<"rep-type string\n";
+
+			putTabInFile(declFile,tabCount);
+			declFile<<"dec-type char*\n";
+
+		} else if (typeString == STRUCT_TYPE) { //Handle the structure type
+		
+		}else {
 			putTabInFile(declFile,tabCount);                      
 			declFile<<"rep-type hashcode\n";
 
