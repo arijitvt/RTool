@@ -666,7 +666,9 @@ void DaikonPass::dumpStructureMembers(fstream &declFile,
 		int counter = 0; 
 		for(Type::subtype_iterator eleItr = structType->element_begin() ;
 				eleItr != structType->element_end(); ++eleItr,++counter) {
-			string elementName = structVariableName.trim().str()+"."+structCommonVarName+"_"+to_string(counter);
+			tabCount = 1;
+			string structCommonVarOnly = structCommonVarName+"_"+to_string(counter);
+			string elementName = structVariableName.trim().str()+"."+structCommonVarOnly;
 			Type *elementType = *eleItr;
 			string elementRepType = getRepTypeString(elementType);
 			string elementDecType = getDecTypeString(elementType);
@@ -679,7 +681,7 @@ void DaikonPass::dumpStructureMembers(fstream &declFile,
 			}
 			tabCount =2;
 			putTabInFile(declFile,tabCount);
-			declFile<<"var-kind field "<<elementName<<"\n";
+			declFile<<"var-kind field "<<structCommonVarOnly<<"\n";
 			putTabInFile(declFile,tabCount);
 			declFile<<"rep-type "<<elementRepType<<"\n";;
 			putTabInFile(declFile,tabCount);
@@ -730,9 +732,10 @@ void DaikonPass::dumpArrays(fstream &declFile,
 			declFile<<"variable "<<elementName<<"\n";
 		}
 
-		SequentialType *ptrType = dyn_cast<SequentialType>(ty);
+		//SequentialType *ptrType = dyn_cast<SequentialType>(ty);
 		//string typeString = getTypeString(ptrType->getElementType());
 		string typeString = getArrayElementTypeString(ty);
+		errs()<<"~~~~~~~ Type is  : "<<typeString<<"\n";
 
 		tabCount = 2;
 		putTabInFile(declFile,tabCount);
@@ -747,8 +750,46 @@ void DaikonPass::dumpArrays(fstream &declFile,
 			putTabInFile(declFile,tabCount);
 			declFile<<"dec-type char*\n";
 
-		} else if (typeString == STRUCT_TYPE) { //Handle the structure type
-		
+		} else if(typeString == STRUCT_TYPE) {
+			putTabInFile(declFile,tabCount);
+			declFile<<"rep-type hashcode\n";
+
+			StructType *structType = dyn_cast<StructType>(getArrayElementType(ty));
+			string structName  = structType->getName().split('.').second.trim().str();
+			
+			putTabInFile(declFile,tabCount);
+			declFile<<"dec-type "<<structName<<"*\n";
+			putTabInFile(declFile,tabCount);
+			declFile<<"flags non_null\n";
+
+			string structCommonVarName = "var";                                                            
+			int varNameCounter = 0;
+
+			for(Type::subtype_iterator eleItr = structType->element_begin() ;
+					eleItr != structType->element_end(); ++eleItr,++varNameCounter) {
+				tabCount = 1;
+				Type *elementType = *eleItr;
+				string elementRepType = getRepTypeString(elementType);
+				string elementDecType = getDecTypeString(elementType);
+
+				string structFieldOnlyName  = structCommonVarName+"_"+to_string(varNameCounter);
+				string structFieldName  = structName+"[..]."+structFieldOnlyName;
+				putTabInFile(declFile,tabCount);
+				if(isGlobalArray) {
+					declFile<<"variable ::"<<structFieldName<<"\n";
+				}else {
+					declFile<<"variable "<<structFieldName<<"\n";
+				}
+				tabCount =2;
+				putTabInFile(declFile,tabCount);
+				declFile<<"var-kind field "<<structFieldOnlyName<<"\n";
+				putTabInFile(declFile,tabCount);
+				declFile<<"rep-type "<<elementRepType<<"\n";;
+				putTabInFile(declFile,tabCount);
+				declFile<<"dec-type "<<elementDecType<<"\n";
+
+			}
+
 		}else {
 			putTabInFile(declFile,tabCount);                      
 			declFile<<"rep-type hashcode\n";
@@ -784,8 +825,6 @@ void DaikonPass::dumpArrays(fstream &declFile,
 			declFile<<"rep-type "<<getRepTypeString(getArrayElementType(ty))<<"[]\n";
 			putTabInFile(declFile,tabCount);
 			declFile<<"dec-type "<<typeString<<"[]\n";
-			putTabInFile(declFile,tabCount);
-			declFile<<"flags non_null\n";
 		}
 	}
 }
