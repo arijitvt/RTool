@@ -108,7 +108,8 @@ class DaikonPass:public ModulePass {
 		//as they are by default pointer type 
 		Type* getGlobalType(PointerType *ty) ;
 
-		string getArrayElementType(Type *ty);
+		string getArrayElementTypeString(Type *ty);
+		Type* getArrayElementType(Type *ty);
 
 	private:
 		vector<Value*>  globalList;
