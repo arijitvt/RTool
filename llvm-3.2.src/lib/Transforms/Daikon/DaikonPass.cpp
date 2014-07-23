@@ -735,7 +735,6 @@ void DaikonPass::dumpArrays(fstream &declFile,
 		//SequentialType *ptrType = dyn_cast<SequentialType>(ty);
 		//string typeString = getTypeString(ptrType->getElementType());
 		string typeString = getArrayElementTypeString(ty);
-		errs()<<"~~~~~~~ Type is  : "<<typeString<<"\n";
 
 		tabCount = 2;
 		putTabInFile(declFile,tabCount);
@@ -784,9 +783,11 @@ void DaikonPass::dumpArrays(fstream &declFile,
 				putTabInFile(declFile,tabCount);
 				declFile<<"var-kind field "<<structFieldOnlyName<<"\n";
 				putTabInFile(declFile,tabCount);
-				declFile<<"rep-type "<<elementRepType<<"\n";;
+				declFile<<"array 1\n";
 				putTabInFile(declFile,tabCount);
-				declFile<<"dec-type "<<elementDecType<<"\n";
+				declFile<<"rep-type "<<elementRepType<<"[]\n";;
+				putTabInFile(declFile,tabCount);
+				declFile<<"dec-type "<<elementDecType<<"[]\n";
 
 			}
 
