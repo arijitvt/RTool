@@ -251,6 +251,7 @@ bool DaikonPass::isSupportedType(Type *type) {
 		case Type::DoubleTyID:  
 		case Type::StructTyID: 
 		case Type::ArrayTyID: 
+		case Type::PointerTyID:
 			// case Type::VectorTyID: 
 			return true;
 
@@ -908,7 +909,11 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 							getTypeString(ptrType->getContainedType(0)) == STRUCT_TYPE) {
 						dumpStructureMembers(declFile,v,ptrType->getContainedType(0),1,false);
 					}
-				}else {
+				}else {  
+					/**
+					 * Array type arguments come as pointer
+					 * so I will take care of them in the pointer handling.
+					 */
 					tabCount = 1;
 					putTabInFile(declFile,tabCount);
 					declFile<<"variable "<<varName<<"\n";
