@@ -286,7 +286,7 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 
 	//Now rest of the work
 
-	vector<Value*> intArguments;
+	vector<Value*> Arguments;
 	/**
 	 * We will Handle only Integer types and ignore all others for time begin
 	 */
@@ -294,11 +294,11 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 		Argument *arg = &*argItr;
 		Value *val = static_cast<Value*>(arg);
 		if(isSupportedType(val)) {
-			intArguments.push_back(val);
+			Arguments.push_back(val);
 		}
 	}
 
-	int totalArgumentSize = intArguments.size()+globalList.size();
+	int totalArgumentSize = Arguments.size()+globalList.size();
 	/**
 	 * So far the format is varcount,function name, then globals, function params
 	 * The var count will count globals and function params but not the function name
@@ -337,8 +337,8 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 	}
 
 	//Now Send the parameters
-	for(vector<Value*>::iterator intArgItr = intArguments.begin(); intArgItr != intArguments.end(); ++intArgItr) {
-		Value *val= *intArgItr;
+	for(vector<Value*>::iterator ArgItr = Arguments.begin(); ArgItr != Arguments.end(); ++ArgItr) {
+		Value *val= *ArgItr;
 		Value *valName = getValueForString(val->getName(),module);
 		string typeStr = getTypeString(val);
 		Value *type=getValueForString(StringRef(typeStr.c_str()).trim(),module);
@@ -419,7 +419,7 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 	}
 
 	//Work second.
-	vector<Value*> intArguments;
+	vector<Value*> Arguments;
 	/**
 	 * We will Handle only Integer types and ignore all others for time begin
 	 */
@@ -427,11 +427,11 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 		Argument *arg = &*argItr;
 		Value *val = static_cast<Value*>(arg);
 		if(!isSupportedType(val)) {
-			intArguments.push_back(val);
+			Arguments.push_back(val);
 		}
 	}
 
-	int totalArgumentSize = intArguments.size()+globalList.size();
+	int totalArgumentSize = Arguments.size()+globalList.size();
 
 	
 	/**
@@ -440,17 +440,16 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 	 */
 
 	//First Check the return type
-	bool hasIntReturn = false;
-	StringRef returnTypeRef( getTypeString(func->getReturnType()));
-	if(returnTypeRef.equals("int")) {
-		hasIntReturn = true;
+	bool hasValidReturn = false;
+	if(isSupportedType(func->getReturnType())) {
+		hasValidReturn = true;
 	}
 
 	//Now standard process
 	Function *hookFunctionBegin = cast<Function>(module->getOrInsertFunction("clap_hookFuncEnd",functionType));
 	vector<Value*> argList;
 	Constant *argCount ; 
-	if(hasIntReturn) {
+	if(hasValidReturn) {
 		//One extra for return type
 		argCount = ConstantInt::get(module->getContext(),APInt(32,totalArgumentSize+1,true));
 	}else {
@@ -486,8 +485,8 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 	}
 	//Now Send the parameters
 	//for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
-	for(vector<Value*>::iterator intArgItr = intArguments.begin(); intArgItr != intArguments.end(); ++intArgItr) {
-		Value *val= *intArgItr;
+	for(vector<Value*>::iterator ArgItr = Arguments.begin(); ArgItr != Arguments.end(); ++ArgItr) {
+		Value *val= *ArgItr;
 		Value *valName = getValueForString(val->getName(),module);
 		string typeStr = getTypeString(val);
 		Value *type=getValueForString(StringRef(typeStr.c_str()).trim(),module);
@@ -507,7 +506,7 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 		}
 	}
 
-	if(hasIntReturn) {
+	if(hasValidReturn) {
 		ReturnInst *retInst = static_cast<ReturnInst*>(target);
 		Value *val= retInst->getReturnValue();
 		Value *valName = getValueForString("return",module);
