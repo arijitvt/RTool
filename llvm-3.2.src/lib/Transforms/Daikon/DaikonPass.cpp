@@ -834,9 +834,128 @@ void DaikonPass::dumpArrays(fstream &declFile,
 }
 
 
+string DaikonPass::getPointerElementTypeString(Type *ty) {
+	if(ty->isPointerTy()) {
+		PointerType *pointerTy = dyn_cast<PointerType>(ty);
+		return getPointerElementTypeString(pointerTy->getElementType());
+	}
+	return getTypeString(ty);
+}
+
+Type* DaikonPass::getPointerElementType(Type *ty) {
+	if(ty->isPointerTy()) {
+		PointerType *pointerTy = dyn_cast<PointerType>(ty);
+		return getPointerElementType(pointerTy->getElementType());
+	}
+	return ty;
+}
+
 void DaikonPass::dumpPointers(fstream &declFile, Value *pointerElement,
 		Type *ty,int tabCount, bool isGlobalPointer) {
 
+	if(declFile.is_open()) {
+		string    elementName = pointerElement->getName().trim().str();
+		//Handle the array pointer iteself
+		putTabInFile(declFile,tabCount);
+		if(isGlobalPointer) {
+			declFile<<"variable ::"<<elementName<<"\n";
+		}else {
+			declFile<<"variable "<<elementName<<"\n";
+		}
+
+		//SequentialType *ptrType = dyn_cast<SequentialType>(ty);
+		//string typeString = getTypeString(ptrType->getElementType());
+		string typeString = getPointerElementTypeString(ty);
+
+		tabCount = 2;
+		putTabInFile(declFile,tabCount);
+		declFile<<"var-kind variable \n";
+		if(typeString == CHAR_TYPE) {
+			putTabInFile(declFile,tabCount);
+			declFile<<"reference-type offset\n";
+
+			putTabInFile(declFile,tabCount);
+			declFile<<"rep-type string\n";
+
+			putTabInFile(declFile,tabCount);
+			declFile<<"dec-type char*\n";
+
+		} else if(typeString == STRUCT_TYPE) {
+			putTabInFile(declFile,tabCount);
+			declFile<<"rep-type hashcode\n";
+
+			StructType *structType = dyn_cast<StructType>(getPointerElementType(ty));
+			string structName  = structType->getName().split('.').second.trim().str();
+			
+			putTabInFile(declFile,tabCount);
+			declFile<<"dec-type "<<structName<<"*\n";
+			putTabInFile(declFile,tabCount);
+			declFile<<"flags non_null\n";
+
+			string structCommonVarName = "var";                                                            
+			int varNameCounter = 0;
+
+			for(Type::subtype_iterator eleItr = structType->element_begin() ;
+					eleItr != structType->element_end(); ++eleItr,++varNameCounter) {
+				tabCount = 1;
+				Type *elementType = *eleItr;
+				string elementRepType = getRepTypeString(elementType);
+				string elementDecType = getDecTypeString(elementType);
+
+				string structFieldOnlyName  = structCommonVarName+"_"+to_string(varNameCounter);
+				string structFieldName  = structName+"[..]."+structFieldOnlyName;
+				putTabInFile(declFile,tabCount);
+				if(isGlobalPointer) {
+					declFile<<"variable ::"<<structFieldName<<"\n";
+				}else {
+					declFile<<"variable "<<structFieldName<<"\n";
+				}
+				tabCount =2;
+				putTabInFile(declFile,tabCount);
+				declFile<<"var-kind field "<<structFieldOnlyName<<"\n";
+				putTabInFile(declFile,tabCount);
+				declFile<<"array 1\n";
+				putTabInFile(declFile,tabCount);
+				declFile<<"rep-type "<<elementRepType<<"[]\n";;
+				putTabInFile(declFile,tabCount);
+				declFile<<"dec-type "<<elementDecType<<"[]\n";
+
+			}
+
+		}else {
+			putTabInFile(declFile,tabCount);                      
+			declFile<<"rep-type hashcode\n";
+
+			putTabInFile(declFile,tabCount);		
+			declFile<<"dec-type "<<typeString<<"*\n";
+
+			tabCount = 1;
+			putTabInFile(declFile,tabCount);
+			if(isGlobalPointer) {
+				declFile<<"variable ::"<<elementName<<"[..]\n";
+			}else {
+				declFile<<"variable "<<elementName<<"[..]\n";
+			}
+
+			tabCount = 2;
+			putTabInFile(declFile,tabCount);
+			declFile<<"var-kind array\n";
+			//declFile<<"var-kind "<<getTypeString(ty)<<"\n";
+			putTabInFile(declFile,tabCount);
+			if(isGlobalPointer) {
+				declFile<<"enclosing-var ::"<<elementName<<"\n";;
+			} else {
+				declFile<<"enclosing-var "<<elementName<<"\n";;
+			}
+			putTabInFile(declFile,tabCount);
+			declFile<<"array 1\n";
+
+			putTabInFile(declFile,tabCount);
+			declFile<<"rep-type "<<getRepTypeString(getPointerElementType(ty))<<"[]\n";
+			putTabInFile(declFile,tabCount);
+			declFile<<"dec-type "<<typeString<<"[]\n";
+		}
+	}
 }
 
 /**

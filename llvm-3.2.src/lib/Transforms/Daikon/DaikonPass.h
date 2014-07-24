@@ -109,8 +109,14 @@ class DaikonPass:public ModulePass {
 		//as they are by default pointer type 
 		Type* getGlobalType(PointerType *ty) ;
 
+		//Get the element type for the nested element
+		//array
 		string getArrayElementTypeString(Type *ty);
 		Type* getArrayElementType(Type *ty);
+
+		//Get the element type for the nested pointers
+		string getPointerElementTypeString(Type *ty);
+		Type* getPointerElementType(Type *ty);
 
 	private:
 		vector<Value*>  globalList;
