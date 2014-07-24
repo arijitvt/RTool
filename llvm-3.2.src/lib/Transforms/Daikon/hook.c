@@ -241,6 +241,33 @@ void clap_hookFuncBegin(int varCount, ...) {
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
 				sprintf(buffer,"%d",*data);
+
+
+				if(strcmp(varType,"int") ==0 )
+				{
+					sprintf(buffer,"%d",*(int*)data);
+				}
+				else if(strcmp(varType,"float") ==0 )
+				{
+					sprintf(buffer,"%f",*(float*)data);
+				}
+				else if(strcmp(varType,"double") ==0 )
+				{
+					sprintf(buffer,"%f",*(double*)data);
+				}
+				else if(strcmp(varType,"char") ==0 )
+				{
+					//We have to take care of this section
+				}
+				else if(strcmp(varType,"short") ==0 )
+				{
+					sprintf(buffer,"%c",*(short*)data);
+				}
+				else if(strcmp(varType,"long") ==0 )
+				{
+					sprintf(buffer,"%ld",*(long*)data);
+				}
+
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
