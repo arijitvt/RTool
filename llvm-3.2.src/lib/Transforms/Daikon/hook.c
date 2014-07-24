@@ -234,7 +234,7 @@ void clap_hookFuncBegin(int varCount, ...) {
 			char *varType = va_arg(vararg,char*);
 			if(varName[0] == ':') {
 				int *data = va_arg(vararg,int*);
-#if 0
+#if DARIJIT
 				printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
 #endif
 				fputs(varName,fp);
@@ -249,7 +249,7 @@ void clap_hookFuncBegin(int varCount, ...) {
 				}
 				else if(strcmp(varType,"float") ==0 )
 				{
-					sprintf(buffer,"%f",*(double*)data);
+					sprintf(buffer,"%f",*(float*)data);
 				}
 				else if(strcmp(varType,"double") ==0 )
 				{
