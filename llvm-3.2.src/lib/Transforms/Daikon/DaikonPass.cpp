@@ -889,8 +889,13 @@ void DaikonPass::dumpPointers(fstream &declFile, Value *pointerElement,
 			
 			putTabInFile(declFile,tabCount);
 			declFile<<"dec-type "<<structName<<"*\n";
-			putTabInFile(declFile,tabCount);
-			declFile<<"flags non_null\n";
+			if(isGlobalPointer) {
+				putTabInFile(declFile,tabCount);
+				declFile<<"flags non_null\n";
+			}else {
+				putTabInFile(declFile,tabCount);
+				declFile<<"flags is_param\n";
+			}
 
 			string structCommonVarName = "var";                                                            
 			int varNameCounter = 0;
@@ -954,6 +959,8 @@ void DaikonPass::dumpPointers(fstream &declFile, Value *pointerElement,
 			declFile<<"rep-type "<<getRepTypeString(getPointerElementType(ty))<<"[]\n";
 			putTabInFile(declFile,tabCount);
 			declFile<<"dec-type "<<typeString<<"[]\n";
+			putTabInFile(declFile,tabCount);
+			declFile<<"flag is_param"<<typeString<<"[]\n";
 		}
 	}
 }
@@ -1037,6 +1044,8 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 					if(arg->hasByValAttr() && 
 							getTypeString(ptrType->getContainedType(0)) == STRUCT_TYPE) {
 						dumpStructureMembers(declFile,v,ptrType->getContainedType(0),1,false);
+					}else {
+						dumpPointers(declFile,v,ptrType->getContainedType(0),1,false);
 					}
 				}else {  
 					/**
