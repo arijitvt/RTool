@@ -249,7 +249,7 @@ void clap_hookFuncBegin(int varCount, ...) {
 				}
 				else if(strcmp(varType,"float") ==0 )
 				{
-					sprintf(buffer,"%f",*(float*)data);
+					sprintf(buffer,"%f",*(double*)data);
 				}
 				else if(strcmp(varType,"double") ==0 )
 				{
@@ -261,7 +261,7 @@ void clap_hookFuncBegin(int varCount, ...) {
 				}
 				else if(strcmp(varType,"short") ==0 )
 				{
-					sprintf(buffer,"%c",*(short*)data);
+					sprintf(buffer,"%d",*(int*)data);
 				}
 				else if(strcmp(varType,"long") ==0 )
 				{

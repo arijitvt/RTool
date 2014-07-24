@@ -20,3 +20,8 @@ export daikon=/home/arijit/Research/RTool/llvm-3.2.src/lib/Transforms/Daikon
 
 #ClassPath setting for the parser jar
 export CLASSPATH=/home/arijit/Research/RTool/jars/parser.jar:$CLASSPATH
+
+#Setting librayr paths
+export LD_LIBRARY_PATH=/home/arijit/Research/RTool/smt_dp/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/home/arijit/Research/RTool/./yices-1.0.39/lib/libyices.so:$LD_LIBRARY_PATH
+
