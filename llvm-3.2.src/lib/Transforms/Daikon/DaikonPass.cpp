@@ -222,12 +222,14 @@ string DaikonPass::getTypeString(Type *type) {
 
 				      }
 		case Type::PointerTyID:{
+#if 0
 					       PointerType *ptrType = static_cast<PointerType*>(type);
 					       if(ptrType  ==  ptr32Type || ptrType == ptr64Type) {
 						       return "int*";
 					       }else if(ptrType == ptr8Type) {
 						       return "char*";
 					       }
+#endif
 					       return POINTER_TYPE;
 				       }
 		default:  {
@@ -831,6 +833,12 @@ void DaikonPass::dumpArrays(fstream &declFile,
 	}
 }
 
+
+void DaikonPass::dumpPointers(fstream &declFile, Value *pointerElement,
+		Type *ty,int tabCount, bool isGlobalPointer) {
+
+}
+
 /**
  * This Function will create declfile
  * */
@@ -877,9 +885,11 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				if(repTypeString == STRUCT_TYPE ) {
 					dumpStructureMembers(declFile,v,ty,1,true);
 				
-				}else if (repTypeString == ARRAY_TYPE){
+				} else if (repTypeString == ARRAY_TYPE) {
 					dumpArrays(declFile,v,ty,1,true);
-				}else {
+				} else if (repTypeString == POINTER_TYPE) {
+					dumpPointers(declFile,v,ty,1,true);								
+				} else {
 					string varName = v->getName().trim().str();
 					tabCount = 1;
 					putTabInFile(declFile,tabCount);
