@@ -25,3 +25,6 @@ export CLASSPATH=/home/arijit/Research/RTool/jars/parser.jar:$CLASSPATH
 export LD_LIBRARY_PATH=/home/arijit/Research/RTool/smt_dp/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/home/arijit/Research/RTool/./yices-1.0.39/lib/libyices.so:$LD_LIBRARY_PATH
 
+
+#Path setting for Daikon
+source $DAIKONDIR/scripts/daikon.bashrc

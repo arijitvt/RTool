@@ -40,6 +40,12 @@ extern int getThreadId(pthread_t *threadStr);
 						
 static int flagToWriteVersionIntoDtrace = 0;
 
+//Local Utility Functions
+static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varType);
+static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType);
+//static void dump_pointer_data_types)
+
+
 void writeInfoIntoDtrace() {
 	flagToWriteVersionIntoDtrace = 1;
 	fp = fopen(fileName,"a");
@@ -96,101 +102,9 @@ void clap_hookBefore(int varCount, ...) {
 }
 
 
-void hookAfter(void *val) {
-       // pthread_mutex_lock(&lock);
-	std_lock();
-	int *value = (int*) val;
-	//No Need to change it as it is already being changed by the callee
-	//++callStackCounbter;
-	fp = fopen(fileName,"a");
-	char buffer[SMALL];
-	
-	if(fp != NULL) {
-                /**
-		 * This is for Entry Section
-		 */
-                char functionNameToWrite[BIGSIZE];
-		memset(functionNameToWrite,'\0',BIGSIZE);
-		strcat(functionNameToWrite,"..");
-		strcat(functionNameToWrite,__FUNCTION__) ;
-		strcat(functionNameToWrite,"():::ENTER");
-		fputs(functionNameToWrite,fp);
-		fputs("\n",fp);
-		fputs("this_invocation_nonce",fp);
-		fputs("\n",fp);
-		memset(buffer,'\0',SMALL);
-		sprintf(buffer,"%d",callStackCounbter);
-		fputs(buffer,fp);
-		fputs("\n",fp);
-	
-		// Now write the variable information
-		
-		int data = *value;
-		char *varName = "val";
-		char *varType = "int";
-		printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
-		fputs(varName,fp);
-		fputs("\n",fp);
-		memset(buffer,'\0',SMALL);
-		sprintf(buffer,"%d",data);
-		fputs(buffer,fp);
-		fputs("\n",fp);
-		fputs("1\n",fp);
-		fputs("\n",fp);
-
-		/***
-		 * Entry ends here and we will start for the exit section
-		 */
-
-		memset(functionNameToWrite,'\0',BIGSIZE);
-		strcat(functionNameToWrite,"..");
-		strcat(functionNameToWrite,__FUNCTION__) ;
-		strcat(functionNameToWrite,"():::EXIT0");
-		fputs(functionNameToWrite,fp);
-		fputs("\n",fp);
-		fputs("this_invocation_nonce",fp);
-		fputs("\n",fp);
-		memset(buffer,'\0',SMALL);
-		sprintf(buffer,"%d",callStackCounbter);
-		fputs(buffer,fp);
-		fputs("\n",fp);
-		
-		// Now write the variable information
-		
-		fputs(varName,fp);
-		fputs("\n",fp);
-		memset(buffer,'\0',SMALL);
-		sprintf(buffer,"%d",data);
-		fputs(buffer,fp);
-		fputs("\n",fp);
-		fputs("1\n",fp);
-
-		//Cleanup and Close
-		//No Need to change it . 
-		//Reason is explained above
-		//--callStackCounbter;
-		fputs("\n",fp);
-		fclose(fp);
-	}else {
-		printf("Unable to open the file\n");
-	}
-	std_unlock();
-	//pthread_mutex_unlock(&lock);
-}
 
 
 
-//void hookAfter(int varCount, ...) {
-//	va_list vararg;
-//	va_start(vararg,varCount);
-//	int i ;
-//	for( i = 0 ; i < varCount ;++i) {
-//		int *data = va_arg(vararg,int*);
-//		char *varName = va_arg(vararg,char*);
-//		printf("The varaiable %s After is %d\n",varName,*data);
-//
-//	}
-//}
 
 //Must be called after acquiring a lock
 void write_thread_id(FILE *fp) {
@@ -233,6 +147,14 @@ void clap_hookFuncBegin(int varCount, ...) {
 			char *varName = va_arg(vararg,char*);
 			char *varType = va_arg(vararg,char*);
 			if(varName[0] == ':') {
+				void *data = va_arg(vararg,void*);
+				//Handle the pointer case separately
+				if(strstr(varType,"*")!= NULL) {
+					
+				}else {
+					dump_basic_data_types(fp,data,varName,varType);
+				}
+#if 0
 				int *data = va_arg(vararg,int*);
 #if DARIJIT
 				printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
@@ -242,6 +164,8 @@ void clap_hookFuncBegin(int varCount, ...) {
 				memset(buffer,'\0',SMALL);
 				sprintf(buffer,"%d",*data);
 
+
+				printf("Variable type coming is %s\t for %s\n",varType,varName);
 
 				if(strcmp(varType,"int") ==0 )
 				{
@@ -266,13 +190,17 @@ void clap_hookFuncBegin(int varCount, ...) {
 				else if(strcmp(varType,"long") ==0 )
 				{
 					sprintf(buffer,"%ld",*(long*)data);
+				}else if (strcmp(varType,"int*")) {
+					sprintf(buffer,"%p",data);
 				}
-
 				fputs(buffer,fp);
 				fputs("\n",fp);
 				fputs("1\n",fp);
 				memset(buffer,'\0',SMALL);
+#endif				
 			}
+
+#if 0			
 			else if(strcmp(varType,"int") ==0 ){
 				int data = va_arg(vararg,int);
 #ifdef DARIJIT
@@ -286,6 +214,10 @@ void clap_hookFuncBegin(int varCount, ...) {
 				fputs("\n",fp);
 				fputs("1\n",fp);
 			}
+
+#endif
+
+
 		}
 		fputs("\n",fp);
 		fclose(fp);
@@ -561,4 +493,66 @@ bool isCurrentOwnerOfLock() {
 	pthread_mutex_unlock(&localLock);
 	pthread_mutex_destroy(&localLock);
 	return result;
+}
+
+/**
+ * Dumping the basic data types 
+ * This function is also not thread safe.
+ */
+static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varType) {
+
+	char buffer[SMALL];
+#if DARIJIT
+	printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
+#endif
+	fputs(varName,fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+	//sprintf(buffer,"%d",*data);
+
+
+	printf("Variable type coming is %s\t for %s\n",varType,varName);
+
+	if(strcmp(varType,"int") ==0 )
+	{
+		sprintf(buffer,"%d",*(int*)data);
+	}
+	else if(strcmp(varType,"float") ==0 )
+	{
+		sprintf(buffer,"%f",*(float*)data);
+	}
+	else if(strcmp(varType,"double") ==0 )
+	{
+		sprintf(buffer,"%f",*(double*)data);
+	}
+	else if(strcmp(varType,"char") ==0 )
+	{
+		//We have to take care of this section
+	}
+	else if(strcmp(varType,"short") ==0 )
+	{
+		sprintf(buffer,"%d",*(int*)data);
+	}
+	else if(strcmp(varType,"long") ==0 )
+	{
+		sprintf(buffer,"%ld",*(long*)data);
+	}	
+	
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+
+}
+
+/**
+ * This function hadnle the dumping case for the
+ * Pointer data type.
+ * This is not a thread safe implementation.
+ * So call it only from thread-safe 
+ * environment
+ */
+
+static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType) {
+
 }
