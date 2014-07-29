@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <pthread.h>
+#include <assert.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -150,7 +151,7 @@ void clap_hookFuncBegin(int varCount, ...) {
 				void *data = va_arg(vararg,void*);
 				//Handle the pointer case separately
 				if(strstr(varType,"*")!= NULL) {
-					
+					dump_pointer_data_types(fp,data,varName,varType);
 				}else {
 					dump_basic_data_types(fp,data,varName,varType);
 				}
@@ -550,9 +551,72 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
  * Pointer data type.
  * This is not a thread safe implementation.
  * So call it only from thread-safe 
- * environment
+ * environment.
+ *
+ * Pointer elemenets should by type casted with 
+ * pointer - pointer
  */
 
 static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType) {
 
-}
+	char buffer[SMALL];
+	
+	fputs(varName,fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+	//sprintf(buffer,"%d",*data);
+	
+	
+	// We will double check that this 
+	// function is handling the pointer type
+	assert(strstr(varType,"*") != NULL);
+	
+	//Pointer data is same for 
+	//all the data types
+	sprintf(buffer,"%p",data);
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+
+
+	
+
+	fputs(varName,fp);
+	fputs("[..]",fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+	
+	if(strcmp(varType,"int*") ==0 ) {
+		int **d = (int**)data;
+        	sprintf(buffer,"[ %d ]",**d);
+	}
+	
+	
+       // else if(strcmp(varType,"float") ==0 )
+       // {
+       // 	sprintf(buffer,"%f",*(float*)data);
+       // }
+       // else if(strcmp(varType,"double") ==0 )
+       // {
+       // 	sprintf(buffer,"%f",*(double*)data);
+       // }
+       // else if(strcmp(varType,"char") ==0 )
+       // {
+       // 	//We have to take care of this section
+       // }
+       // else if(strcmp(varType,"short") ==0 )
+       // {
+       // 	sprintf(buffer,"%d",*(int*)data);
+       // }
+       // else if(strcmp(varType,"long") ==0 )
+       // {
+       // 	sprintf(buffer,"%ld",*(long*)data);
+       // }	
+	
+	
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+}       
