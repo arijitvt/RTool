@@ -590,29 +590,26 @@ static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varT
 	if(strcmp(varType,"int*") ==0 ) {
 		int **d = (int**)data;
         	sprintf(buffer,"[ %d ]",**d);
-	}
+	} else if(strcmp(varType,"float*") ==0 ) {
+		float **f = (float**)data;
+        	sprintf(buffer,"[ %f ]",**f);
+        } else if(strcmp(varType,"double*") ==0 ) {
+        	double **d = (double**)data;
+        	sprintf(buffer,"[ %f ]",**d);
+        } else if(strcmp(varType,"short*") ==0 ) {
+        	short **d = (short **)data;
+        	sprintf(buffer,"[ %d ]",**d);
+        }
+        else if(strcmp(varType,"long*") ==0 ) {
+        	long **d = (long **) d;
+        	sprintf(buffer,"[ %ld ]",**d);
+        }
 	
-	
-       // else if(strcmp(varType,"float") ==0 )
-       // {
-       // 	sprintf(buffer,"%f",*(float*)data);
-       // }
-       // else if(strcmp(varType,"double") ==0 )
-       // {
-       // 	sprintf(buffer,"%f",*(double*)data);
-       // }
-       // else if(strcmp(varType,"char") ==0 )
-       // {
+       // else if(strcmp(varType,"char") ==0 ) {
+       // 
        // 	//We have to take care of this section
        // }
-       // else if(strcmp(varType,"short") ==0 )
-       // {
-       // 	sprintf(buffer,"%d",*(int*)data);
-       // }
-       // else if(strcmp(varType,"long") ==0 )
-       // {
-       // 	sprintf(buffer,"%ld",*(long*)data);
-       // }	
+
 	
 	
 	fputs(buffer,fp);
