@@ -155,50 +155,6 @@ void clap_hookFuncBegin(int varCount, ...) {
 				}else {
 					dump_basic_data_types(fp,data,varName,varType);
 				}
-#if 0
-				int *data = va_arg(vararg,int*);
-#if DARIJIT
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
-#endif
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%d",*data);
-
-
-				printf("Variable type coming is %s\t for %s\n",varType,varName);
-
-				if(strcmp(varType,"int") ==0 )
-				{
-					sprintf(buffer,"%d",*(int*)data);
-				}
-				else if(strcmp(varType,"float") ==0 )
-				{
-					sprintf(buffer,"%f",*(float*)data);
-				}
-				else if(strcmp(varType,"double") ==0 )
-				{
-					sprintf(buffer,"%f",*(double*)data);
-				}
-				else if(strcmp(varType,"char") ==0 )
-				{
-					//We have to take care of this section
-				}
-				else if(strcmp(varType,"short") ==0 )
-				{
-					sprintf(buffer,"%d",*(int*)data);
-				}
-				else if(strcmp(varType,"long") ==0 )
-				{
-					sprintf(buffer,"%ld",*(long*)data);
-				}else if (strcmp(varType,"int*")) {
-					sprintf(buffer,"%p",data);
-				}
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-				memset(buffer,'\0',SMALL);
-#endif				
 			}
 
 #if 0			
@@ -254,6 +210,18 @@ void clap_hookFuncEnd(int varCount, ...) {
 			char *varName = va_arg(vararg,char*);
 			char *varType = va_arg(vararg,char*);
 			if(varName[0] == ':') {
+				void *data = va_arg(vararg,void*);
+				//Handle the pointer case separately
+				if(strstr(varType,"*")!= NULL) {
+					dump_pointer_data_types(fp,data,varName,varType);
+				}else {
+					dump_basic_data_types(fp,data,varName,varType);
+				}
+			}
+
+#if 0			
+			
+			if(varName[0] == ':') {
 				int *data = va_arg(vararg,int*);
 				printf("The parameter %s at end is %d of type %s:\n",varName,*data,varType);
 				fputs(varName,fp);
@@ -276,6 +244,8 @@ void clap_hookFuncEnd(int varCount, ...) {
 				fputs("\n",fp);
 				fputs("1\n",fp);
 			}
+
+#endif
 		}
 		fputs("\n",fp);
 		fclose(fp);
@@ -601,7 +571,7 @@ static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varT
         	sprintf(buffer,"[ %d ]",**d);
         }
         else if(strcmp(varType,"long*") ==0 ) {
-        	long **d = (long **) d;
+        	long **d = (long **) data;
         	sprintf(buffer,"[ %ld ]",**d);
         }
 	
