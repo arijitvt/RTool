@@ -103,9 +103,20 @@ class DaikonPass:public ModulePass {
 		void dumpArrays(fstream &declFile,
 				Value *arrayElement, Type *ty,int tabCount,bool isGlobalArray);
 
+		void dumpPointers(fstream &declFile,
+				Value *pointerElement,Type *ty,int tabCount,bool isGlobalPointer);
 		//Get the type of the global variables 
 		//as they are by default pointer type 
 		Type* getGlobalType(PointerType *ty) ;
+
+		//Get the element type for the nested element
+		//array
+		string getArrayElementTypeString(Type *ty);
+		Type* getArrayElementType(Type *ty);
+
+		//Get the element type for the nested pointers
+		string getPointerElementTypeString(Type *ty);
+		Type* getPointerElementType(Type *ty);
 
 	private:
 		vector<Value*>  globalList;

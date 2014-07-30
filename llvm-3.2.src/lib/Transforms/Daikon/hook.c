@@ -502,7 +502,8 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
 	}
 	else if(strcmp(varType,"short") ==0 )
 	{
-		sprintf(buffer,"%d",*(int*)data);
+		sprintf(buffer,"%d",*(short*)data);
+
 	}
 	else if(strcmp(varType,"long") ==0 )
 	{
@@ -586,4 +587,74 @@ static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varT
 	fputs("\n",fp);
 	fputs("1\n",fp);
 	memset(buffer,'\0',SMALL);
-}       
+}
+
+static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varType) {
+
+	char buffer[SMALL];
+	
+	fputs(varName,fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+		
+	
+	
+	// checking to make sure it's of type array
+	assert(strstr(varType,"[]") != NULL);
+	
+	
+	sprintf(buffer,"%p",data);
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+
+	fputs(varName,fp);
+	fputs("[..]",fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+	
+
+	if(strcmp(varType,"int[]") ==0 ) {
+		int (*d)[] = (int(*)[])data;
+        	size_t size = sizeof(d->si);
+		fputs("[",fp);
+		size_t index = 0;
+		for (index; index <size; index++)
+		{
+		  if (index != size -1)
+		  {
+			  sprintf(buffer, " %d, ", (*d)[index]);
+		  }
+		  else
+		  {
+		  	 sprintf(buffer, " %d ", (*d)[index]);
+		  }
+		}
+		fputs("]",fp);		
+	}
+       // else if(strcmp(varType,"float[]") ==0 ) {
+       // 	float **f = (float**)data;
+       // 	sprintf(buffer,"[ %f ]",**f);
+       // }
+       // else if(strcmp(varType,"double[]") ==0 ) {
+       // 	double **d = (double**)data;
+       // 	sprintf(buffer,"[ %f ]",**d);
+       // }
+       // else if(strcmp(varType,"short[]") ==0 ) {
+       // 	short **d = (short **)data;
+       // 	sprintf(buffer,"[ %d ]",**d);
+       // }
+       // else if(strcmp(varType,"long[]") ==0 ) {
+       // 	long **d = (long **) data;
+       // 	sprintf(buffer,"[ %ld ]",**d);
+       // }
+	
+
+	
+	
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+}

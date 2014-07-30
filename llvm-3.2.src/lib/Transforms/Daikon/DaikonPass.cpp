@@ -336,7 +336,19 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
 			pointerElementType+="*";
 			type = getValueForString(StringRef(pointerElementType).trim(),module);
-		}else {
+		}
+		//handle array types differently
+		else if (globalTypeString == ARRAY_TYPE)
+		{
+			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+			string arrayElementType = getArrayElementTypeString(getGlobalType(gVal->getType()));
+			arrayElementType += "[]";
+			type = getValueForString(StringRef(arrayElementType).trim(), module);
+
+
+		}
+		else
+		{
 			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
 			type=getValueForString(StringRef(
 						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
