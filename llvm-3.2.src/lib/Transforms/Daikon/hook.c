@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <pthread.h>
+#include <assert.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -39,6 +40,12 @@ extern int getThreadId(pthread_t *threadStr);
 //Inspect Linking ends
 						
 static int flagToWriteVersionIntoDtrace = 0;
+
+//Local Utility Functions
+static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varType);
+static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType);
+//static void dump_pointer_data_types)
+
 
 void writeInfoIntoDtrace() {
 	flagToWriteVersionIntoDtrace = 1;
@@ -83,32 +90,6 @@ void writeInfoIntoDtrace() {
 //
 //}
 
-
-//helper function to cast void data pointers
-
-
-
-//void castHelp(char* type, void** value )
-//{
-//       if ( type == "int")
-//       {
-//		(int*) *value;
-//       }
-//       else if( type == "char")
-//       {
-//       		(char*) *value;
-//       }
-//       else if( type == "float")
-//       {
-//       		(float*) *value;
-//       }
-//       else if( type == "double")
-//       {
-//       		(double*) *value;
-//       }
-//
-//}
-//
 void clap_hookBefore(int varCount, ...) {
 	va_list vararg;
 	va_start(vararg,varCount);
@@ -122,101 +103,9 @@ void clap_hookBefore(int varCount, ...) {
 }
 
 
-void hookAfter(void *val) {
-       // pthread_mutex_lock(&lock);
-	std_lock();
-	int *value = (int*) val;
-	//No Need to change it as it is already being changed by the callee
-	//++callStackCounbter;
-	fp = fopen(fileName,"a");
-	char buffer[SMALL];
-	
-	if(fp != NULL) {
-                /**
-		 * This is for Entry Section
-		 */
-                char functionNameToWrite[BIGSIZE];
-		memset(functionNameToWrite,'\0',BIGSIZE);
-		strcat(functionNameToWrite,"..");
-		strcat(functionNameToWrite,__FUNCTION__) ;
-		strcat(functionNameToWrite,"():::ENTER");
-		fputs(functionNameToWrite,fp);
-		fputs("\n",fp);
-		fputs("this_invocation_nonce",fp);
-		fputs("\n",fp);
-		memset(buffer,'\0',SMALL);
-		sprintf(buffer,"%d",callStackCounbter);
-		fputs(buffer,fp);
-		fputs("\n",fp);
-	
-		// Now write the variable information
-		
-		int data = *value;
-		char *varName = "val";
-		char *varType = "int";
-		printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
-		fputs(varName,fp);
-		fputs("\n",fp);
-		memset(buffer,'\0',SMALL);
-		sprintf(buffer,"%d",data);
-		fputs(buffer,fp);
-		fputs("\n",fp);
-		fputs("1\n",fp);
-		fputs("\n",fp);
-
-		/***
-		 * Entry ends here and we will start for the exit section
-		 */
-
-		memset(functionNameToWrite,'\0',BIGSIZE);
-		strcat(functionNameToWrite,"..");
-		strcat(functionNameToWrite,__FUNCTION__) ;
-		strcat(functionNameToWrite,"():::EXIT0");
-		fputs(functionNameToWrite,fp);
-		fputs("\n",fp);
-		fputs("this_invocation_nonce",fp);
-		fputs("\n",fp);
-		memset(buffer,'\0',SMALL);
-		sprintf(buffer,"%d",callStackCounbter);
-		fputs(buffer,fp);
-		fputs("\n",fp);
-		
-		// Now write the variable information
-		
-		fputs(varName,fp);
-		fputs("\n",fp);
-		memset(buffer,'\0',SMALL);
-		sprintf(buffer,"%d",data);
-		fputs(buffer,fp);
-		fputs("\n",fp);
-		fputs("1\n",fp);
-
-		//Cleanup and Close
-		//No Need to change it . 
-		//Reason is explained above
-		//--callStackCounbter;
-		fputs("\n",fp);
-		fclose(fp);
-	}else {
-		printf("Unable to open the file\n");
-	}
-	std_unlock();
-	//pthread_mutex_unlock(&lock);
-}
 
 
 
-//void hookAfter(int varCount, ...) {
-//	va_list vararg;
-//	va_start(vararg,varCount);
-//	int i ;
-//	for( i = 0 ; i < varCount ;++i) {
-//		int *data = va_arg(vararg,int*);
-//		char *varName = va_arg(vararg,char*);
-//		printf("The varaiable %s After is %d\n",varName,*data);
-//
-//	}
-//}
 
 //Must be called after acquiring a lock
 void write_thread_id(FILE *fp) {
@@ -233,13 +122,11 @@ void clap_hookFuncBegin(int varCount, ...) {
 	std_lock();
 	//pthread_mutex_lock(&lock);
 
-	if(flagToWriteVersionIntoDtrace == 0)
-	{
+	if(flagToWriteVersionIntoDtrace == 0) {
 		writeInfoIntoDtrace();
 	}
 	fp = fopen(fileName,"a");
-	if(fp != NULL) 
-	{
+	if(fp != NULL) {
 		write_thread_id(fp);
 		char buffer[SMALL];
 		va_list vararg;
@@ -257,55 +144,21 @@ void clap_hookFuncBegin(int varCount, ...) {
 		fputs(buffer,fp);
 		fputs("\n",fp);
 		int i ;
-		for( i = 0 ; i < varCount ;++i) 
-		{
+		for( i = 0 ; i < varCount ;++i) {
 			char *varName = va_arg(vararg,char*);
 			char *varType = va_arg(vararg,char*);
-			if(varName[0] == ':') 
-			{
+			if(varName[0] == ':') {
 				void *data = va_arg(vararg,void*);
-				
-#if 0
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
-#endif                                          
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				if(strcmp(varType,"int") ==0 )
-				{
-					sprintf(buffer,"%d",*(int*)data);
+				//Handle the pointer case separately
+				if(strstr(varType,"*")!= NULL) {
+					dump_pointer_data_types(fp,data,varName,varType);
+				}else {
+					dump_basic_data_types(fp,data,varName,varType);
 				}
-				else if(strcmp(varType,"float") ==0 )
-				{
-					sprintf(buffer,"%f",*(float*)data);
-				}
-				else if(strcmp(varType,"double") ==0 )
-				{
-					sprintf(buffer,"%f",*(double*)data);
-				}
-				else if(strcmp(varType,"char") ==0 )
-				{
-					sprintf(buffer,"%c",*(char*)data);
-				}
-				else if(strcmp(varType,"short") ==0 )
-				{
-					sprintf(buffer,"%c",*(short*)data);
-				}
-				else if(strcmp(varType,"long") ==0 )
-				{
-					sprintf(buffer,"%ld",*(long*)data);
-				}
-				//else if(strcmp(varType,"struct") ==0 )
-				//{
-				//	sprintf(buffer,"%c",*(struct*)data);
-				//} 
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-				memset(buffer,'\0',SMALL);
 			}
-			else if(strcmp(varType,"int") ==0 )
-			{
+
+#if 0			
+			else if(strcmp(varType,"int") ==0 ){
 				int data = va_arg(vararg,int);
 #ifdef DARIJIT
 				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
@@ -318,100 +171,19 @@ void clap_hookFuncBegin(int varCount, ...) {
 				fputs("\n",fp);
 				fputs("1\n",fp);
 			}
-                        else if(strcmp(varType,"float") ==0 )
-			{
-				double data = va_arg(vararg,double); //float is promoted to double when passed through va_arg
-#ifdef DARIJIT
-				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
-#endif
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%f",data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-			}
-			else if(strcmp(varType,"double") ==0 )
-			{
-				double data = va_arg(vararg,double);
-#ifdef DARIJIT
-				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
-#endif
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%f",data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-			} 
-			else if(strcmp(varType,"char") ==0 )
-			{
-				int data = va_arg(vararg,int);
-#ifdef DARIJIT
-				printf("The parameter %s at beginning is %c of type %s:\n",varName,data,varType);
-#endif
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%c",data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-			}
-			else if(strcmp(varType,"short") ==0 )
-			{
-				int data = va_arg(vararg,int);
-#ifdef DARIJIT
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
-#endif
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%c",data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-			}
-			else if(strcmp(varType,"long") ==0 )
-			{
-				long data = va_arg(vararg,long);
-#ifdef DARIJIT
-				printf("The parameter %s at beginning is %ld of type %s:\n",varName,data,varType);
-#endif
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%ld",data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-			}	
-	                //else if(strcmp(varType,"struct") ==0 )
-			//{
-			//	struct data = va_arg(vararg,struct);
-#ifdef DARIJIT
-			//	printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
-#endif
-			//	fputs(varName,fp);
-			//	fputs("\n",fp);
-			//	memset(buffer,'\0',SMALL);
-			//	sprintf(buffer,"%c",data);
-			//	fputs(buffer,fp);
-			//	fputs("\n",fp);
-			//	fputs("1\n",fp);
-			//}
 
+#endif
+
+
+		}
 		fputs("\n",fp);
 		fclose(fp);
 		++callStackCounbter;
-	      }
-	
+	}
 	std_unlock();
 	//pthread_mutex_unlock(&lock);
-	}
 }
+
 
 void clap_hookFuncEnd(int varCount, ...) {
 	std_lock();
@@ -434,47 +206,36 @@ void clap_hookFuncEnd(int varCount, ...) {
 		fputs(buffer,fp);
 		fputs("\n",fp);
 		int i ;
-		for( i = 0 ; i < varCount ;++i)
-		{
+		for( i = 0 ; i < varCount ;++i) {
 			char *varName = va_arg(vararg,char*);
 			char *varType = va_arg(vararg,char*);
-			if(varName[0] == ':') 
-			{
+			if(varName[0] == ':') {
 				void *data = va_arg(vararg,void*);
-				
-#if 0
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
-#endif                                          
+				//Handle the pointer case separately
+				if(strstr(varType,"*")!= NULL) {
+					dump_pointer_data_types(fp,data,varName,varType);
+				}else {
+					dump_basic_data_types(fp,data,varName,varType);
+				}
+			}
+
+#if 0			
+			
+			if(varName[0] == ':') {
+				int *data = va_arg(vararg,int*);
+				printf("The parameter %s at end is %d of type %s:\n",varName,*data,varType);
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
-				if(strcmp(varType,"int") ==0 )
-				{
-					sprintf(buffer,"%d",*(int*)data);
-				}
-				else if(strcmp(varType,"float") ==0 )
-				{
-					sprintf(buffer,"%f",*(float*)data);
-				}
-				else if(strcmp(varType,"double") ==0 )
-				{
-					sprintf(buffer,"%f",*(double*)data);
-				}
-				else if(strcmp(varType,"char") ==0 )
-				{
-					sprintf(buffer,"%c",*(char*)data);
-				}
+				sprintf(buffer,"%d",*data);
 				fputs(buffer,fp);
 				fputs("\n",fp);
-				fputs("1\n",fp);
 				memset(buffer,'\0',SMALL);
+				fputs("1\n",fp);
 			}
-			else if(strcmp(varType,"int") ==0 )
-			{
+			else if(strcmp(varType,"int") ==0 ){
 				int data = va_arg(vararg,int);
-#ifdef DARIJIT
-				printf("The parameter %s at beginning is %d of type %s:\n",varName,data,varType);
-#endif
+				printf("The parameter %s at end is %d of type %s:\n",varName,data,varType);
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
@@ -483,51 +244,11 @@ void clap_hookFuncEnd(int varCount, ...) {
 				fputs("\n",fp);
 				fputs("1\n",fp);
 			}
-                        else if(strcmp(varType,"float") ==0 )
-			{
-				double data = va_arg(vararg,double);
-#ifdef DARIJIT
-				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
+
 #endif
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%f",data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-			}
-			else if(strcmp(varType,"double") ==0 )
-			{
-				double data = va_arg(vararg,double);
-#ifdef DARIJIT
-				printf("The parameter %s at beginning is %f of type %s:\n",varName,data,varType);
-#endif
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%f",data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-			} 
-			else if(strcmp(varType,"char") ==0 )
-			{
-				int data = va_arg(vararg,int);
-#ifdef DARIJIT
-				printf("The parameter %s at beginning is %c of type %s:\n",varName,data,varType);
-#endif
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%c",data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-			}
-		fputs("\n",fp);
-		fclose(fp);	
 		}
+		fputs("\n",fp);
+		fclose(fp);
 	}
 	std_unlock();
 	//pthread_mutex_unlock(&lock);
@@ -744,3 +465,125 @@ bool isCurrentOwnerOfLock() {
 	pthread_mutex_destroy(&localLock);
 	return result;
 }
+
+/**
+ * Dumping the basic data types 
+ * This function is also not thread safe.
+ */
+static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varType) {
+
+	char buffer[SMALL];
+#if DARIJIT
+	printf("The parameter %s at beginning is %d of type %s:\n",varName,*data,varType);
+#endif
+	fputs(varName,fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+	//sprintf(buffer,"%d",*data);
+
+
+	printf("Variable type coming is %s\t for %s\n",varType,varName);
+
+	if(strcmp(varType,"int") ==0 )
+	{
+		sprintf(buffer,"%d",*(int*)data);
+	}
+	else if(strcmp(varType,"float") ==0 )
+	{
+		sprintf(buffer,"%f",*(float*)data);
+	}
+	else if(strcmp(varType,"double") ==0 )
+	{
+		sprintf(buffer,"%f",*(double*)data);
+	}
+	else if(strcmp(varType,"char") ==0 )
+	{
+		//We have to take care of this section
+	}
+	else if(strcmp(varType,"short") ==0 )
+	{
+		sprintf(buffer,"%d",*(int*)data);
+	}
+	else if(strcmp(varType,"long") ==0 )
+	{
+		sprintf(buffer,"%ld",*(long*)data);
+	}	
+	
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+
+}
+
+/**
+ * This function hadnle the dumping case for the
+ * Pointer data type.
+ * This is not a thread safe implementation.
+ * So call it only from thread-safe 
+ * environment.
+ *
+ * Pointer elemenets should by type casted with 
+ * pointer - pointer
+ */
+
+static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType) {
+
+	char buffer[SMALL];
+	
+	fputs(varName,fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+	//sprintf(buffer,"%d",*data);
+	
+	
+	// We will double check that this 
+	// function is handling the pointer type
+	assert(strstr(varType,"*") != NULL);
+	
+	//Pointer data is same for 
+	//all the data types
+	sprintf(buffer,"%p",data);
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+
+
+	
+
+	fputs(varName,fp);
+	fputs("[..]",fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+	
+	if(strcmp(varType,"int*") ==0 ) {
+		int **d = (int**)data;
+        	sprintf(buffer,"[ %d ]",**d);
+	} else if(strcmp(varType,"float*") ==0 ) {
+		float **f = (float**)data;
+        	sprintf(buffer,"[ %f ]",**f);
+        } else if(strcmp(varType,"double*") ==0 ) {
+        	double **d = (double**)data;
+        	sprintf(buffer,"[ %f ]",**d);
+        } else if(strcmp(varType,"short*") ==0 ) {
+        	short **d = (short **)data;
+        	sprintf(buffer,"[ %d ]",**d);
+        }
+        else if(strcmp(varType,"long*") ==0 ) {
+        	long **d = (long **) data;
+        	sprintf(buffer,"[ %ld ]",**d);
+        }
+	
+       // else if(strcmp(varType,"char") ==0 ) {
+       // 
+       // 	//We have to take care of this section
+       // }
+
+	
+	
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+}       
