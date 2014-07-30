@@ -650,22 +650,6 @@ string DaikonPass::getRepTypeString(Value *val) {
 
 Type*  DaikonPass::getGlobalType(PointerType *ty) {
 	return ty->getContainedType(0);
-//	if(ty == ptrStructType) {
-//		return structType;
-//	}else if(ty = ptr8Type) {
-//		return int8Type;
-//	}else if(ty == ptr16Type) {
-//		return int16Type;
-//	}else if(ty == ptr32Type) {
-//		return int32Type;
-//	}else if(ty == ptr64Type) {
-//		return int64Type;
-//	}else if(ty == ptrFloatType) {
-//		return floatType;
-//	}else if (ty == ptrDoubleType) {
-//		return doubleType;
-//	}
-//	return NULL;                                                                                                                                
 }
 
 /**
@@ -983,8 +967,10 @@ void DaikonPass::dumpPointers(fstream &declFile, Value *pointerElement,
 			declFile<<"rep-type "<<getRepTypeString(getPointerElementType(ty))<<"[]\n";
 			putTabInFile(declFile,tabCount);
 			declFile<<"dec-type "<<typeString<<"[]\n";
-			putTabInFile(declFile,tabCount);
-			declFile<<"flag is_param"<<typeString<<"[]\n";
+			if(!isGlobalPointer) {
+				putTabInFile(declFile,tabCount);
+				declFile<<"flag is_param"<<typeString<<"[]\n";
+			}			
 		}
 	}
 }
