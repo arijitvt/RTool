@@ -493,12 +493,12 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 		Value *type;
 		//Handle the pointer types differently
 		if (globalTypeString == POINTER_TYPE) { 
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+			errs()<<"Name of the global variable from end pointer"<<gVal->getName() <<" "<<globalTypeString<<"\n";
 			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
 			pointerElementType+="*";
 			type = getValueForString(StringRef(pointerElementType).trim(),module);
 		}else {
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+			errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
 			type=getValueForString(StringRef(
 						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
 		}
@@ -536,7 +536,6 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 		Value *val= retInst->getReturnValue();
 		Value *valName = getValueForString("return",module);
 		Value *type=getValueForString(StringRef(getTypeString(val).c_str()).trim(),module);
-		errs()<<"Type of the return instruction : "<<getTypeString(val)<<"\n";
 		argList.push_back(valName);
 		argList.push_back(type);
 		argList.push_back(val);

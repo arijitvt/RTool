@@ -149,6 +149,7 @@ void clap_hookFuncBegin(int varCount, ...) {
 			char *varType = va_arg(vararg,char*);
 			//if(varName[0] == ':') {
 			//Handle the pointer case separately
+#if 0			
 			printf("Variable type coming is %s\t for %s\n",varType,varName);
 			if(strstr(varType,"*")!= NULL) {
 				void *data = va_arg(vararg,void*);
@@ -197,7 +198,6 @@ void clap_hookFuncBegin(int varCount, ...) {
 			}
 			//}
 
-#if 0			
 			else if(strcmp(varType,"int") ==0 ){
 				int data = va_arg(vararg,int);
 #ifdef DARIJIT
@@ -213,6 +213,82 @@ void clap_hookFuncBegin(int varCount, ...) {
 			}
 
 #endif
+
+			if(varName[0] == ':') {
+				int *data = va_arg(vararg,int*);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%d",*data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				fputs("1\n",fp);
+			}
+			else if(strcmp(varType,"int") ==0 ){
+				int data = va_arg(vararg,int);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%d",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}else if(strcmp(varType,"float") == 0) {
+			
+				float data = va_arg(vararg,double);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%f",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}
+			else if(strcmp(varType,"double") ==0 )
+			{
+				double data = va_arg(vararg,double);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%f",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}
+			else if(strcmp(varType,"char") ==0 )
+			{
+				char data = va_arg(vararg,int);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%c",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}
+			else if(strcmp(varType,"short") ==0 )
+			{
+				short data = va_arg(vararg,int);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%d",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}
+			else if(strcmp(varType,"long") ==0 )
+			{
+				long data = va_arg(vararg,long);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%ld",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}	
 
 
 		}
@@ -247,77 +323,17 @@ void clap_hookFuncEnd(int varCount, ...) {
 		fputs(buffer,fp);
 		fputs("\n",fp);
 		int i ;
+		printf("Var count is %d\n",varCount);
 		for( i = 0 ; i < varCount ;++i) {
 			char *varName = va_arg(vararg,char*);
 			char *varType = va_arg(vararg,char*);
 			//if(varName[0] == ':') {
 			//Handle the pointer case separately
-			if(strstr(varType,"*")!= NULL) {
-				void *data = va_arg(vararg,void*);
-				dump_pointer_data_types(fp,data,varName,varType);
-			}else {
-				//dump_basic_data_types(fp,data,varName,varType);
+			printf("Exit of the function Variable  Name is: %s\t : and type: %s\n",varName,varType);
 
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-
-				if(strcmp(varType,"return") == 0) {
-					printf("This is the return variable %s\n",varName);
-					//if(data == NULL) {
-					//	printf("Data is coming as null@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
-					//}else {
-					//	printf("Data is NOT null $$$$$$$$$$$$$$$$\n");
-					//}
-					return ;
-				}
-
-
-				printf("Exit of the function Variable  Name is: %s\t : and type: %s\n",varName,varType);
-
-				if(strcmp(varType,"int") ==0 )
-				{
-					int data = va_arg(vararg,int);
-					sprintf(buffer,"%d",data);
-				}
-				else if(strcmp(varType,"float") ==0 )					
-				{
-					float data = (float)va_arg(vararg,double);
-					sprintf(buffer,"%f",data);
-				}
-				else if(strcmp(varType,"double") ==0 )
-				{
-					double data = va_arg(vararg,double);
-					sprintf(buffer,"%f",data);
-				}
-				else if(strcmp(varType,"char") ==0 )
-				{
-					char data = (int)va_arg(vararg,int);
-					sprintf(buffer,"%c",data);
-				}
-				else if(strcmp(varType,"short") ==0 )
-				{
-					short data = (short)va_arg(vararg,int);
-					sprintf(buffer,"%d",data);
-				}
-				else if(strcmp(varType,"long") ==0 )
-				{
-					long data = va_arg(vararg,long);
-					sprintf(buffer,"%ld",data);
-				}	
-
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				fputs("1\n",fp);
-				memset(buffer,'\0',SMALL);
-			}
 		       // }
-
-#if 0			
-			
 			if(varName[0] == ':') {
 				int *data = va_arg(vararg,int*);
-				printf("The parameter %s at end is %d of type %s:\n",varName,*data,varType);
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
@@ -329,7 +345,49 @@ void clap_hookFuncEnd(int varCount, ...) {
 			}
 			else if(strcmp(varType,"int") ==0 ){
 				int data = va_arg(vararg,int);
-				printf("The parameter %s at end is %d of type %s:\n",varName,data,varType);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%d",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}else if(strcmp(varType,"float") == 0) {
+			
+				float data = va_arg(vararg,double);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%f",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}
+			else if(strcmp(varType,"double") ==0 )
+			{
+				double data = va_arg(vararg,double);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%f",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}
+			else if(strcmp(varType,"char") ==0 )
+			{
+				char data = va_arg(vararg,int);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%c",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}
+			else if(strcmp(varType,"short") ==0 )
+			{
+				short data = va_arg(vararg,int);
 				fputs(varName,fp);
 				fputs("\n",fp);
 				memset(buffer,'\0',SMALL);
@@ -338,8 +396,18 @@ void clap_hookFuncEnd(int varCount, ...) {
 				fputs("\n",fp);
 				fputs("1\n",fp);
 			}
+			else if(strcmp(varType,"long") ==0 )
+			{
+				long data = va_arg(vararg,long);
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+				sprintf(buffer,"%ld",data);
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+			}	
 
-#endif
 		}
 		fputs("\n",fp);
 		fclose(fp);
