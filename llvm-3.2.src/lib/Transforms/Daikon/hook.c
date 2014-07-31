@@ -147,15 +147,55 @@ void clap_hookFuncBegin(int varCount, ...) {
 		for( i = 0 ; i < varCount ;++i) {
 			char *varName = va_arg(vararg,char*);
 			char *varType = va_arg(vararg,char*);
-			if(varName[0] == ':') {
+			//if(varName[0] == ':') {
+			//Handle the pointer case separately
+			printf("Variable type coming is %s\t for %s\n",varType,varName);
+			if(strstr(varType,"*")!= NULL) {
 				void *data = va_arg(vararg,void*);
-				//Handle the pointer case separately
-				if(strstr(varType,"*")!= NULL) {
-					dump_pointer_data_types(fp,data,varName,varType);
-				}else {
-					dump_basic_data_types(fp,data,varName,varType);
+				dump_pointer_data_types(fp,data,varName,varType);
+			}else {
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+
+				if(strcmp(varType,"int") ==0 )
+				{
+					int data = va_arg(vararg,int);
+					sprintf(buffer,"%d",data);
 				}
+				else if(strcmp(varType,"float") ==0 )					
+				{
+					float data = (float)va_arg(vararg,double);
+					sprintf(buffer,"%f",data);
+				}
+				else if(strcmp(varType,"double") ==0 )
+				{
+					double data = va_arg(vararg,double);
+					sprintf(buffer,"%f",data);
+				}
+				else if(strcmp(varType,"char") ==0 )
+				{
+					char data = (int)va_arg(vararg,int);
+					sprintf(buffer,"%c",data);
+				}
+				else if(strcmp(varType,"short") ==0 )
+				{
+					short data = (short)va_arg(vararg,int);
+					sprintf(buffer,"%d",data);
+				}
+				else if(strcmp(varType,"long") ==0 )
+				{
+					long data = va_arg(vararg,long);
+					sprintf(buffer,"%ld",data);
+				}	
+
+
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+				memset(buffer,'\0',SMALL);
 			}
+			//}
 
 #if 0			
 			else if(strcmp(varType,"int") ==0 ){
@@ -178,6 +218,7 @@ void clap_hookFuncBegin(int varCount, ...) {
 		}
 		fputs("\n",fp);
 		fclose(fp);
+		va_end(vararg);
 		++callStackCounbter;
 	}
 	std_unlock();
@@ -209,15 +250,68 @@ void clap_hookFuncEnd(int varCount, ...) {
 		for( i = 0 ; i < varCount ;++i) {
 			char *varName = va_arg(vararg,char*);
 			char *varType = va_arg(vararg,char*);
-			if(varName[0] == ':') {
+			//if(varName[0] == ':') {
+			//Handle the pointer case separately
+			if(strstr(varType,"*")!= NULL) {
 				void *data = va_arg(vararg,void*);
-				//Handle the pointer case separately
-				if(strstr(varType,"*")!= NULL) {
-					dump_pointer_data_types(fp,data,varName,varType);
-				}else {
-					dump_basic_data_types(fp,data,varName,varType);
+				dump_pointer_data_types(fp,data,varName,varType);
+			}else {
+				//dump_basic_data_types(fp,data,varName,varType);
+
+				fputs(varName,fp);
+				fputs("\n",fp);
+				memset(buffer,'\0',SMALL);
+
+				if(strcmp(varType,"return") == 0) {
+					printf("This is the return variable %s\n",varName);
+					//if(data == NULL) {
+					//	printf("Data is coming as null@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+					//}else {
+					//	printf("Data is NOT null $$$$$$$$$$$$$$$$\n");
+					//}
+					return ;
 				}
+
+
+				printf("Exit of the function Variable  Name is: %s\t : and type: %s\n",varName,varType);
+
+				if(strcmp(varType,"int") ==0 )
+				{
+					int data = va_arg(vararg,int);
+					sprintf(buffer,"%d",data);
+				}
+				else if(strcmp(varType,"float") ==0 )					
+				{
+					float data = (float)va_arg(vararg,double);
+					sprintf(buffer,"%f",data);
+				}
+				else if(strcmp(varType,"double") ==0 )
+				{
+					double data = va_arg(vararg,double);
+					sprintf(buffer,"%f",data);
+				}
+				else if(strcmp(varType,"char") ==0 )
+				{
+					char data = (int)va_arg(vararg,int);
+					sprintf(buffer,"%c",data);
+				}
+				else if(strcmp(varType,"short") ==0 )
+				{
+					short data = (short)va_arg(vararg,int);
+					sprintf(buffer,"%d",data);
+				}
+				else if(strcmp(varType,"long") ==0 )
+				{
+					long data = va_arg(vararg,long);
+					sprintf(buffer,"%ld",data);
+				}	
+
+				fputs(buffer,fp);
+				fputs("\n",fp);
+				fputs("1\n",fp);
+				memset(buffer,'\0',SMALL);
 			}
+		       // }
 
 #if 0			
 			
@@ -249,6 +343,7 @@ void clap_hookFuncEnd(int varCount, ...) {
 		}
 		fputs("\n",fp);
 		fclose(fp);
+		va_end(vararg);
 	}
 	std_unlock();
 	//pthread_mutex_unlock(&lock);
@@ -480,6 +575,15 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
 	fputs("\n",fp);
 	memset(buffer,'\0',SMALL);
 	//sprintf(buffer,"%d",*data);
+	
+	if(strcmp(varName,"return") == 0) {
+		if(data == NULL) {
+			printf("Data is coming as null@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+		}else {
+			printf("Data is NOT null $$$$$$$$$$$$$$$$\n");
+		}
+		return ;
+	}
 
 
 	printf("Variable type coming is %s\t for %s\n",varType,varName);
