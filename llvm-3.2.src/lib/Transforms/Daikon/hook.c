@@ -44,6 +44,7 @@ static int flagToWriteVersionIntoDtrace = 0;
 //Local Utility Functions
 static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varType);
 static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType);
+static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varType, size_t size);
 //static void dump_pointer_data_types)
 
 
@@ -152,7 +153,15 @@ void clap_hookFuncBegin(int varCount, ...) {
 				//Handle the pointer case separately
 				if(strstr(varType,"*")!= NULL) {
 					dump_pointer_data_types(fp,data,varName,varType);
-				}else {
+				}
+				else if(strstr(varType,"[]") != NULL)
+				{
+					size_t size = va_arg(vararg, size_t);	
+					
+					dump_array_data_types(fp, data, varName, varType, size);
+				}
+				
+				else {
 					dump_basic_data_types(fp,data,varName,varType);
 				}
 			}
@@ -589,7 +598,7 @@ static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varT
 	memset(buffer,'\0',SMALL);
 }
 
-static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varType) {
+static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varType, size_t size) {
 
 	char buffer[SMALL];
 	
@@ -616,11 +625,9 @@ static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varTyp
 	
 
 	if(strcmp(varType,"int[]") ==0 ) {
-		int (*d)[] = (int(*)[])data;
-        	size_t size = sizeof(d->si);
-		fputs("[",fp);
-		size_t index = 0;
-		for (index; index <size; index++)
+		int (*d)[] = (int(*)[])data; 
+		fputs("[",fp);	
+		for (size_t index = 0; index <size; index++)
 		{
 		  if (index != size -1)
 		  {

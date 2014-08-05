@@ -336,6 +336,12 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
 			pointerElementType+="*";
 			type = getValueForString(StringRef(pointerElementType).trim(),module);
+			argList.push_back(valName);
+			argList.push_back(type);
+			argList.push_back(gVal);
+
+
+		
 		}
 		//handle array types differently
 		else if (globalTypeString == ARRAY_TYPE)
@@ -344,6 +350,19 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 			string arrayElementType = getArrayElementTypeString(getGlobalType(gVal->getType()));
 			arrayElementType += "[]";
 			type = getValueForString(StringRef(arrayElementType).trim(), module);
+			Value* size;
+			inst_iterator instItr;
+			for(instItr = inst_begin(func); instItr != inst_end(func) ; ++instItr)
+			{
+				  if(AllocaInst *inst = dyn_cast<AllocaInst>(&*instItr)) 
+				  {	
+					size = inst->getArraySize();	
+				  }
+		        }
+			argList.push_back(valName);
+			argList.push_back(type);
+			argList.push_back(gVal);
+			argList.push_back(size);	
 
 
 		}
@@ -352,12 +371,13 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
 			type=getValueForString(StringRef(
 						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
-		}
-		//Value *type=getValueForString(StringRef("int"),module);
-		argList.push_back(valName);
-		argList.push_back(type);
-		argList.push_back(gVal);
+		
+			argList.push_back(valName);
+			argList.push_back(type);
+			argList.push_back(gVal);
 
+
+		}
 	}
 
 	//Now Send the parameters
