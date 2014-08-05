@@ -626,8 +626,9 @@ static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varTyp
 
 	if(strcmp(varType,"int[]") ==0 ) {
 		int (*d)[] = (int(*)[])data; 
-		fputs("[",fp);	
-		for (size_t index = 0; index <size; index++)
+		fputs("[",fp);
+		size_t index = 0;
+		for (; index <size; index++)
 		{
 		  if (index != size -1)
 		  {

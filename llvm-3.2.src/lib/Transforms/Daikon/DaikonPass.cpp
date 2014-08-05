@@ -293,7 +293,7 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 	for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
 		Argument *arg = &*argItr;
 		Value *val = static_cast<Value*>(arg);
-		if(isSupportedType(val)) {
+		if(!isSupportedType(val)) {
 			Arguments.push_back(val);
 		}
 	}
