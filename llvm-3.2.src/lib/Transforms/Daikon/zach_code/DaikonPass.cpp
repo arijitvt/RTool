@@ -131,7 +131,6 @@ bool DaikonPass::isGlobal(Value *value) {
 
 Value* DaikonPass::getValueForString(StringRef variableName,Module *module) {
 	Constant *valueName = ConstantDataArray::getString(module->getContext(), variableName,true);
-	errs() << "getValueForString() valueName == " << *valueName << '\n';
 	Value *val = new GlobalVariable(*module,valueName->getType(), true, GlobalValue::InternalLinkage,valueName);
 	return val;
 }
@@ -223,14 +222,12 @@ string DaikonPass::getTypeString(Type *type) {
 
 				      }
 		case Type::PointerTyID:{
-#if 0
 					       PointerType *ptrType = static_cast<PointerType*>(type);
 					       if(ptrType  ==  ptr32Type || ptrType == ptr64Type) {
 						       return "int*";
 					       }else if(ptrType == ptr8Type) {
 						       return "char*";
 					       }
-#endif
 					       return POINTER_TYPE;
 				       }
 		default:  {
@@ -254,7 +251,6 @@ bool DaikonPass::isSupportedType(Type *type) {
 		case Type::DoubleTyID:  
 		case Type::StructTyID: 
 		case Type::ArrayTyID: 
-		case Type::PointerTyID:
 			// case Type::VectorTyID: 
 			return true;
 
@@ -279,27 +275,24 @@ void DaikonPass::putTabInFile(fstream &stream, int tabCount) {
  */
 void DaikonPass::hookAtFunctionStart(Function *func) {
 	if(doNotInstrument(func->getName())) return;
-        //Do the initial Starts
-	Module *module = func->getParent();
-	if(!isInit) {
-		doInit(module);
-	}
 
-	//Now rest of the work
 
 	vector<Value*> Arguments;
-	/**
-	 * We will Handle only Integer types and ignore all others for time begin
-	 */
+	
 	for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
 		Argument *arg = &*argItr;
 		Value *val = static_cast<Value*>(arg);
-		if(isSupportedType(val)) {
-			Arguments.push_back(val);
+		
+		if( isSupportedType(val)) {
+		 	Arguments.push_back(val);
 		}
 	}
 
 	int totalArgumentSize = Arguments.size()+globalList.size();
+	Module *module = func->getParent();
+	if(!isInit) {
+		doInit(module);
+	}
 	/**
 	 * So far the format is varcount,function name, then globals, function params
 	 * The var count will count globals and function params but not the function name
@@ -329,58 +322,13 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 		GlobalVariable *gVal = static_cast<GlobalVariable*>(val);
 		string valNameStr = "::"+val->getName().str();
                 Value *valName = getValueForString(StringRef(valNameStr.c_str()),module);
-		string globalTypeString = getTypeString(getGlobalType(gVal->getType()));
-		Value *type;
-		//Handle the pointer types differently
-		if (globalTypeString == POINTER_TYPE) { 
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
-			pointerElementType+="*";
-			type = getValueForString(StringRef(pointerElementType).trim(),module);
-			argList.push_back(valName);
-			argList.push_back(type);
-			argList.push_back(gVal);
+	        Value *type=getValueForString(StringRef(getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
+		//Value *type=getValueForString(StringRef("int"),module);
+		argList.push_back(valName);
+		argList.push_back(type);
+		argList.push_back(gVal);
 
-		
-		}
-		//handle array types differently
-	        else if (globalTypeString == ARRAY_TYPE)
-	        {
-	        	errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-	        	string arrayElementType = getArrayElementTypeString(getGlobalType(gVal->getType()));
-	        	arrayElementType += "[]";
-	        	type = getValueForString(StringRef(arrayElementType).trim(), module);
-	        	Value* size;
-			Type *gValType = getGlobalType(gVal->getType());
-	                ArrayType *arrType = dyn_cast<ArrayType>(gValType); 
-			uint64_t arrSize = arrType->getNumElements();
-			cout << arrSize << "\n";
-			std::stringstream  ss;
-			ss << arrSize;
-			string stringVal = ss.str();
-			cout << stringVal << '\n';
-			size = getValueForString(StringRef(stringVal).trim(), module);
-			argList.push_back(valName);
-			argList.push_back(type);
-			argList.push_back(gVal);
-			argList.push_back(size);
-
-
-	        }
-		else
-		{
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			type=getValueForString(StringRef(
-						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
-		
-			argList.push_back(valName);
-			argList.push_back(type);
-			argList.push_back(gVal);
-
-
-		}
 	}
-
 
 	//Now Send the parameters
 	for(vector<Value*>::iterator ArgItr = Arguments.begin(); ArgItr != Arguments.end(); ++ArgItr) {
@@ -458,13 +406,7 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 
 void DaikonPass::hookAtFunctionEnd(Function *func) {
 	if(doNotInstrument(func->getName())) return;
-        //Formalities first
-	Module *module = func->getParent();
-	if(!isInit) {
-		doInit(module);
-	}
 
-	//Work second.
 	vector<Value*> Arguments;
 	/**
 	 * We will Handle only Integer types and ignore all others for time begin
@@ -472,21 +414,30 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 	for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
 		Argument *arg = &*argItr;
 		Value *val = static_cast<Value*>(arg);
-		if(!isSupportedType(val)) {
+		StringRef retTypeRef(getTypeString(val)) ;
+		if(isSupportedType(val)){
 			Arguments.push_back(val);
 		}
+	       // size_t found = retType.find("int");
+	       // if(found!=string::npos) {
+	       // 	intArguments.push_back(val);
+	       // }
 	}
 
 	int totalArgumentSize = Arguments.size()+globalList.size();
 
 	
+	Module *module = func->getParent();
+	if(!isInit) {
+		doInit(module);
+	}
 	/**
 	 * So far the format is varcount,function name, then globals, function params
 	 * The var count will count globals and function params but not the function name
 	 */
 
 	//First Check the return type
-	bool hasValidReturn = false;
+	bool hasValidReturn = false;	
 	if(isSupportedType(func->getReturnType())) {
 		hasValidReturn = true;
 	}
@@ -522,21 +473,8 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 		GlobalVariable *gVal = static_cast<GlobalVariable*>(val);
 		string valNameStr = "::"+val->getName().str();
                 Value *valName = getValueForString(StringRef(valNameStr.c_str()),module);
-
-		string globalTypeString = getTypeString(getGlobalType(gVal->getType()));
-		Value *type;
-		//Handle the pointer types differently
-		if (globalTypeString == POINTER_TYPE) { 
-			errs()<<"Name of the global variable from end pointer"<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
-			pointerElementType+="*";
-			type = getValueForString(StringRef(pointerElementType).trim(),module);
-		}else {
-			errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			type=getValueForString(StringRef(
-						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
-		}
-
+		Value *type=getValueForString(StringRef(getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
+		//Value *type=getValueForString(StringRef("int"),module);
 		argList.push_back(valName);
 		argList.push_back(type);
 		argList.push_back(gVal);
@@ -684,6 +622,22 @@ string DaikonPass::getRepTypeString(Value *val) {
 
 Type*  DaikonPass::getGlobalType(PointerType *ty) {
 	return ty->getContainedType(0);
+//	if(ty == ptrStructType) {
+//		return structType;
+//	}else if(ty = ptr8Type) {
+//		return int8Type;
+//	}else if(ty == ptr16Type) {
+//		return int16Type;
+//	}else if(ty == ptr32Type) {
+//		return int32Type;
+//	}else if(ty == ptr64Type) {
+//		return int64Type;
+//	}else if(ty == ptrFloatType) {
+//		return floatType;
+//	}else if (ty == ptrDoubleType) {
+//		return doubleType;
+//	}
+//	return NULL;                                                                                                                                
 }
 
 /**
@@ -711,9 +665,7 @@ void DaikonPass::dumpStructureMembers(fstream &declFile,
 		int counter = 0; 
 		for(Type::subtype_iterator eleItr = structType->element_begin() ;
 				eleItr != structType->element_end(); ++eleItr,++counter) {
-			tabCount = 1;
-			string structCommonVarOnly = structCommonVarName+"_"+to_string(counter);
-			string elementName = structVariableName.trim().str()+"."+structCommonVarOnly;
+			string elementName = structVariableName.trim().str()+"."+structCommonVarName+"_"+to_string(counter);
 			Type *elementType = *eleItr;
 			string elementRepType = getRepTypeString(elementType);
 			string elementDecType = getDecTypeString(elementType);
@@ -726,7 +678,7 @@ void DaikonPass::dumpStructureMembers(fstream &declFile,
 			}
 			tabCount =2;
 			putTabInFile(declFile,tabCount);
-			declFile<<"var-kind field "<<structCommonVarOnly<<"\n";
+			declFile<<"var-kind field "<<elementName<<"\n";
 			putTabInFile(declFile,tabCount);
 			declFile<<"rep-type "<<elementRepType<<"\n";;
 			putTabInFile(declFile,tabCount);
@@ -740,272 +692,31 @@ void DaikonPass::dumpStructureMembers(fstream &declFile,
 }
 
 
-/**
- * Get the element type-string for the
- * nested array.
- */
-string DaikonPass::getArrayElementTypeString(Type *ty) {
-	if(ty->isArrayTy()) {
-		ArrayType *arrTy = dyn_cast<ArrayType>(ty);
-		return getArrayElementTypeString(arrTy->getElementType());
-	}
-	return getTypeString(ty);
-}
-
-
-Type* DaikonPass::getArrayElementType(Type *ty) {
-	if(ty->isArrayTy()) {
-		ArrayType *arrTy = dyn_cast<ArrayType>(ty);
-		return getArrayElementType(arrTy->getElementType());
-	}
-	return ty;
-}
-
 /**                                                                                                                                     
  * Dump the various different types of Array
  */
 
 void DaikonPass::dumpArrays(fstream &declFile,
-		Value *arrayElement, Type *ty,int tabCount,bool isGlobalArray) {	
+				Value *arrayElement, Type *ty,int tabCount,bool isGlobalArray) {	
 	if(declFile.is_open()) {
 		string    elementName = arrayElement->getName().trim().str();
-		//Handle the array pointer iteself
 		putTabInFile(declFile,tabCount);
 		if(isGlobalArray) {
 			declFile<<"variable ::"<<elementName<<"\n";
 		}else {
 			declFile<<"variable "<<elementName<<"\n";
 		}
-
-		//SequentialType *ptrType = dyn_cast<SequentialType>(ty);
-		//string typeString = getTypeString(ptrType->getElementType());
-		string typeString = getArrayElementTypeString(ty);
-
-		tabCount = 2;
+		tabCount =2;
 		putTabInFile(declFile,tabCount);
 		declFile<<"var-kind variable \n";
-		if(typeString == CHAR_TYPE) {
-			putTabInFile(declFile,tabCount);
-			declFile<<"reference-type offset\n";
-
-			putTabInFile(declFile,tabCount);
-			declFile<<"rep-type string\n";
-
-			putTabInFile(declFile,tabCount);
-			declFile<<"dec-type char*\n";
-
-		} else if(typeString == STRUCT_TYPE) {
-			putTabInFile(declFile,tabCount);
-			declFile<<"rep-type hashcode\n";
-
-			StructType *structType = dyn_cast<StructType>(getArrayElementType(ty));
-			string structName  = structType->getName().split('.').second.trim().str();
-			
-			putTabInFile(declFile,tabCount);
-			declFile<<"dec-type "<<structName<<"*\n";
-			putTabInFile(declFile,tabCount);
-			declFile<<"flags non_null\n";
-
-			string structCommonVarName = "var";                                                            
-			int varNameCounter = 0;
-
-			for(Type::subtype_iterator eleItr = structType->element_begin() ;
-					eleItr != structType->element_end(); ++eleItr,++varNameCounter) {
-				tabCount = 1;
-				Type *elementType = *eleItr;
-				string elementRepType = getRepTypeString(elementType);
-				string elementDecType = getDecTypeString(elementType);
-
-				string structFieldOnlyName  = structCommonVarName+"_"+to_string(varNameCounter);
-				string structFieldName  = structName+"[..]."+structFieldOnlyName;
-				putTabInFile(declFile,tabCount);
-				if(isGlobalArray) {
-					declFile<<"variable ::"<<structFieldName<<"\n";
-				}else {
-					declFile<<"variable "<<structFieldName<<"\n";
-				}
-				tabCount =2;
-				putTabInFile(declFile,tabCount);
-				declFile<<"var-kind field "<<structFieldOnlyName<<"\n";
-				putTabInFile(declFile,tabCount);
-				declFile<<"array 1\n";
-				putTabInFile(declFile,tabCount);
-				declFile<<"rep-type "<<elementRepType<<"[]\n";;
-				putTabInFile(declFile,tabCount);
-				declFile<<"dec-type "<<elementDecType<<"[]\n";
-
-			}
-
-		}else {
-			putTabInFile(declFile,tabCount);                      
-			declFile<<"rep-type hashcode\n";
-
-			putTabInFile(declFile,tabCount);		
-			declFile<<"dec-type "<<typeString<<"*\n";
-			putTabInFile(declFile,tabCount);
-			declFile<<"flags non_null\n";
-
-			tabCount = 1;
-			putTabInFile(declFile,tabCount);
-			if(isGlobalArray) {
-				declFile<<"variable ::"<<elementName<<"[..]\n";
-			}else {
-				declFile<<"variable "<<elementName<<"[..]\n";
-			}
-
-			tabCount = 2;
-			putTabInFile(declFile,tabCount);
-			declFile<<"var-kind "<<getTypeString(ty)<<"\n";
-			putTabInFile(declFile,tabCount);
-			if(isGlobalArray) {
-				declFile<<"enclosing-var ::"<<elementName<<"\n";;
-			} else {
-				declFile<<"enclosing-var "<<elementName<<"\n";;
-			}
-			putTabInFile(declFile,tabCount);
-			declFile<<"reference-type offset\n";
-			putTabInFile(declFile,tabCount);
-			declFile<<"array 1\n";
-
-			putTabInFile(declFile,tabCount);
-			declFile<<"rep-type "<<getRepTypeString(getArrayElementType(ty))<<"[]\n";
-			putTabInFile(declFile,tabCount);
-			declFile<<"dec-type "<<typeString<<"[]\n";
-		}
-	}
-}
-
-
-string DaikonPass::getPointerElementTypeString(Type *ty) {
-	if(ty->isPointerTy()) {
-		PointerType *pointerTy = dyn_cast<PointerType>(ty);
-		return getPointerElementTypeString(pointerTy->getElementType());
-	}
-	return getTypeString(ty);
-}
-
-Type* DaikonPass::getPointerElementType(Type *ty) {
-	if(ty->isPointerTy()) {
-		PointerType *pointerTy = dyn_cast<PointerType>(ty);
-		return getPointerElementType(pointerTy->getElementType());
-	}
-	return ty;
-}
-
-void DaikonPass::dumpPointers(fstream &declFile, Value *pointerElement,
-		Type *ty,int tabCount, bool isGlobalPointer) {
-
-	if(declFile.is_open()) {
-		string    elementName = pointerElement->getName().trim().str();
-		//Handle the array pointer iteself
 		putTabInFile(declFile,tabCount);
-		if(isGlobalPointer) {
-			declFile<<"variable ::"<<elementName<<"\n";
-		}else {
-			declFile<<"variable "<<elementName<<"\n";
-		}
-
-		//SequentialType *ptrType = dyn_cast<SequentialType>(ty);
-		//string typeString = getTypeString(ptrType->getElementType());
-		string typeString = getPointerElementTypeString(ty);
-
-		tabCount = 2;
+		declFile<<"rep-type hashcode\n";;
 		putTabInFile(declFile,tabCount);
-		declFile<<"var-kind variable \n";
-		if(typeString == CHAR_TYPE) {
-			putTabInFile(declFile,tabCount);
-			declFile<<"reference-type offset\n";
-
-			putTabInFile(declFile,tabCount);
-			declFile<<"rep-type string\n";
-
-			putTabInFile(declFile,tabCount);
-			declFile<<"dec-type char*\n";
-
-		} else if(typeString == STRUCT_TYPE) {
-			putTabInFile(declFile,tabCount);
-			declFile<<"rep-type hashcode\n";
-
-			StructType *structType = dyn_cast<StructType>(getPointerElementType(ty));
-			string structName  = structType->getName().split('.').second.trim().str();
-			
-			putTabInFile(declFile,tabCount);
-			declFile<<"dec-type "<<structName<<"*\n";
-			if(isGlobalPointer) {
-				putTabInFile(declFile,tabCount);
-				declFile<<"flags non_null\n";
-			}else {
-				putTabInFile(declFile,tabCount);
-				declFile<<"flags is_param\n";
-			}
-
-			string structCommonVarName = "var";                                                            
-			int varNameCounter = 0;
-
-			for(Type::subtype_iterator eleItr = structType->element_begin() ;
-					eleItr != structType->element_end(); ++eleItr,++varNameCounter) {
-				tabCount = 1;
-				Type *elementType = *eleItr;
-				string elementRepType = getRepTypeString(elementType);
-				string elementDecType = getDecTypeString(elementType);
-
-				string structFieldOnlyName  = structCommonVarName+"_"+to_string(varNameCounter);
-				string structFieldName  = structName+"[..]."+structFieldOnlyName;
-				putTabInFile(declFile,tabCount);
-				if(isGlobalPointer) {
-					declFile<<"variable ::"<<structFieldName<<"\n";
-				}else {
-					declFile<<"variable "<<structFieldName<<"\n";
-				}
-				tabCount =2;
-				putTabInFile(declFile,tabCount);
-				declFile<<"var-kind field "<<structFieldOnlyName<<"\n";
-				putTabInFile(declFile,tabCount);
-				declFile<<"array 1\n";
-				putTabInFile(declFile,tabCount);
-				declFile<<"rep-type "<<elementRepType<<"[]\n";;
-				putTabInFile(declFile,tabCount);
-				declFile<<"dec-type "<<elementDecType<<"[]\n";
-
-			}
-
-		}else {
-			putTabInFile(declFile,tabCount);                      
-			declFile<<"rep-type hashcode\n";
-
-			putTabInFile(declFile,tabCount);		
-			declFile<<"dec-type "<<typeString<<"*\n";
-
-			tabCount = 1;
-			putTabInFile(declFile,tabCount);
-			if(isGlobalPointer) {
-				declFile<<"variable ::"<<elementName<<"[..]\n";
-			}else {
-				declFile<<"variable "<<elementName<<"[..]\n";
-			}
-
-			tabCount = 2;
-			putTabInFile(declFile,tabCount);
-			declFile<<"var-kind array\n";
-			//declFile<<"var-kind "<<getTypeString(ty)<<"\n";
-			putTabInFile(declFile,tabCount);
-			if(isGlobalPointer) {
-				declFile<<"enclosing-var ::"<<elementName<<"\n";;
-			} else {
-				declFile<<"enclosing-var "<<elementName<<"\n";;
-			}
-			putTabInFile(declFile,tabCount);
-			declFile<<"array 1\n";
-
-			putTabInFile(declFile,tabCount);
-			declFile<<"rep-type "<<getRepTypeString(getPointerElementType(ty))<<"[]\n";
-			putTabInFile(declFile,tabCount);
-			declFile<<"dec-type "<<typeString<<"[]\n";
-			if(!isGlobalPointer) {
-				putTabInFile(declFile,tabCount);
-				declFile<<"flag is_param"<<typeString<<"[]\n";
-			}			
-		}
+		SequentialType *ptrType = dyn_cast<SequentialType>(ty);
+		string typeString = getTypeString(ptrType->getElementType());
+		declFile<<"dec-type "<<typeString<<"*\n";
+		putTabInFile(declFile,tabCount);
+		declFile<<"flags non_null\n";
 	}
 }
 
@@ -1055,11 +766,9 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				if(repTypeString == STRUCT_TYPE ) {
 					dumpStructureMembers(declFile,v,ty,1,true);
 				
-				} else if (repTypeString == ARRAY_TYPE) {
+				}else if (repTypeString == ARRAY_TYPE){
 					dumpArrays(declFile,v,ty,1,true);
-				} else if (repTypeString == POINTER_TYPE) {
-					dumpPointers(declFile,v,ty,1,true);								
-				} else {
+				}else {
 					string varName = v->getName().trim().str();
 					tabCount = 1;
 					putTabInFile(declFile,tabCount);
@@ -1088,14 +797,8 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 					if(arg->hasByValAttr() && 
 							getTypeString(ptrType->getContainedType(0)) == STRUCT_TYPE) {
 						dumpStructureMembers(declFile,v,ptrType->getContainedType(0),1,false);
-					}else {
-						dumpPointers(declFile,v,ptrType->getContainedType(0),1,false);
 					}
-				}else {  
-					/**
-					 * Array type arguments come as pointer
-					 * so I will take care of them in the pointer handling.
-					 */
+				}else {
 					tabCount = 1;
 					putTabInFile(declFile,tabCount);
 					declFile<<"variable "<<varName<<"\n";

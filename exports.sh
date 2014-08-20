@@ -20,3 +20,5 @@ export daikon=/home/zach/RTool/llvm-3.2.src/lib/Transforms/Daikon
 
 #ClassPath setting for the parser jar
 export CLASSPATH=/home/zach/RTool/jars/parser.jar:$CLASSPATH
+#Path setting for Daikon
+source $DAIKONDIR/scripts/daikon.bashrc

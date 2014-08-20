@@ -68,7 +68,9 @@ def run_clap_pass(filename,filename_without_extension) :
 	command_string = opt_tool+blank+" -load "+llvm_lib_path+"/LLVMTAP.so "+\
 			clap_opt_flag+" -o "+output_filename+blank\
 				+input_filename;
-	os.system(command_string)
+	echo_string = "echo "+command_string
+        os.system(echo_string)
+        os.system(command_string)
 
 	os.system("rm -rf "+input_filename); 
 	return output_filename;
@@ -80,7 +82,9 @@ def run_daikon_pass(filename,filename_without_extension):
 	command_string = opt_tool+blank+"-load"+blank+llvm_lib_path+\
 			"/DaikonPass.so -form -dumpppt=false -loadppt=true -o "+\
 				output_filename+blank+filename;
-	os.system(command_string);
+	echo_string = "echo "+command_string
+        os.system(echo_string)
+        os.system(command_string);
 	return output_filename
 
 def run_daikon_pass_with_spacer(filename,filename_without_extension,spacer):
@@ -167,7 +171,7 @@ def compile_all_files(src,sp):
 def cleanup(temp_file_list) :
 	for file in temp_file_list:
 		print "Deleting "+file
-		os.system("rm -rf "+file);
+                #os.system("echo chao: Don't forget to run:  rm -rf "+file);
 
 
 def gen_program_point_for_file(filename):
