@@ -131,6 +131,7 @@ bool DaikonPass::isGlobal(Value *value) {
 
 Value* DaikonPass::getValueForString(StringRef variableName,Module *module) {
 	Constant *valueName = ConstantDataArray::getString(module->getContext(), variableName,true);
+	errs() << "getValueForString() valueName == " << *valueName << '\n';
 	Value *val = new GlobalVariable(*module,valueName->getType(), true, GlobalValue::InternalLinkage,valueName);
 	return val;
 }
@@ -293,7 +294,7 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 	for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
 		Argument *arg = &*argItr;
 		Value *val = static_cast<Value*>(arg);
-		if(!isSupportedType(val)) {
+		if(isSupportedType(val)) {
 			Arguments.push_back(val);
 		}
 	}
@@ -344,28 +345,29 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 		
 		}
 		//handle array types differently
-		else if (globalTypeString == ARRAY_TYPE)
-		{
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			string arrayElementType = getArrayElementTypeString(getGlobalType(gVal->getType()));
-			arrayElementType += "[]";
-			type = getValueForString(StringRef(arrayElementType).trim(), module);
-			Value* size;
-			inst_iterator instItr;
-			for(instItr = inst_begin(func); instItr != inst_end(func) ; ++instItr)
-			{
-				  if(AllocaInst *inst = dyn_cast<AllocaInst>(&*instItr)) 
-				  {	
-					size = inst->getArraySize();	
-				  }
-		        }
+	        else if (globalTypeString == ARRAY_TYPE)
+	        {
+	        	errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+	        	string arrayElementType = getArrayElementTypeString(getGlobalType(gVal->getType()));
+	        	arrayElementType += "[]";
+	        	type = getValueForString(StringRef(arrayElementType).trim(), module);
+	        	Value* size;
+			Type *gValType = getGlobalType(gVal->getType());
+	                ArrayType *arrType = dyn_cast<ArrayType>(gValType); 
+			uint64_t arrSize = arrType->getNumElements();
+			cout << arrSize << "\n";
+			std::stringstream  ss;
+			ss << arrSize;
+			string stringVal = ss.str();
+			cout << stringVal << '\n';
+			size = getValueForString(StringRef(stringVal).trim(), module);
 			argList.push_back(valName);
 			argList.push_back(type);
 			argList.push_back(gVal);
-			argList.push_back(size);	
+			argList.push_back(size);
 
 
-		}
+	        }
 		else
 		{
 			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
@@ -379,6 +381,7 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 
 		}
 	}
+
 
 	//Now Send the parameters
 	for(vector<Value*>::iterator ArgItr = Arguments.begin(); ArgItr != Arguments.end(); ++ArgItr) {
@@ -525,12 +528,12 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 		Value *type;
 		//Handle the pointer types differently
 		if (globalTypeString == POINTER_TYPE) { 
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+			errs()<<"Name of the global variable from end pointer"<<gVal->getName() <<" "<<globalTypeString<<"\n";
 			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
 			pointerElementType+="*";
 			type = getValueForString(StringRef(pointerElementType).trim(),module);
 		}else {
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+			errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
 			type=getValueForString(StringRef(
 						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
 		}
@@ -682,22 +685,6 @@ string DaikonPass::getRepTypeString(Value *val) {
 
 Type*  DaikonPass::getGlobalType(PointerType *ty) {
 	return ty->getContainedType(0);
-//	if(ty == ptrStructType) {
-//		return structType;
-//	}else if(ty = ptr8Type) {
-//		return int8Type;
-//	}else if(ty == ptr16Type) {
-//		return int16Type;
-//	}else if(ty == ptr32Type) {
-//		return int32Type;
-//	}else if(ty == ptr64Type) {
-//		return int64Type;
-//	}else if(ty == ptrFloatType) {
-//		return floatType;
-//	}else if (ty == ptrDoubleType) {
-//		return doubleType;
-//	}
-//	return NULL;                                                                                                                                
 }
 
 /**
@@ -1015,8 +1002,10 @@ void DaikonPass::dumpPointers(fstream &declFile, Value *pointerElement,
 			declFile<<"rep-type "<<getRepTypeString(getPointerElementType(ty))<<"[]\n";
 			putTabInFile(declFile,tabCount);
 			declFile<<"dec-type "<<typeString<<"[]\n";
-			putTabInFile(declFile,tabCount);
-			declFile<<"flag is_param"<<typeString<<"[]\n";
+			if(!isGlobalPointer) {
+				putTabInFile(declFile,tabCount);
+				declFile<<"flag is_param"<<typeString<<"[]\n";
+			}			
 		}
 	}
 }
