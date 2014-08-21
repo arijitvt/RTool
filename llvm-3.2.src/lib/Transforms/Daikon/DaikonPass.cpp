@@ -338,17 +338,6 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 			pointerElementType+="*";
 			type = getValueForString(StringRef(pointerElementType).trim(),module);
 		} 
-                else {
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			type=getValueForString(StringRef(
-						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
-		}
-		//Value *type=getValueForString(StringRef("int"),module);
-		argList.push_back(valName);
-		argList.push_back(type);
-		argList.push_back(gVal);
-		
-		}
 		//handle array types differently
 	        else if (globalTypeString == ARRAY_TYPE)
 	        {
@@ -678,7 +667,6 @@ string DaikonPass::getRepTypeString(Type *ty) {
 /**
  * This function returns the rep-type of a value
  */
-
 string DaikonPass::getRepTypeString(Value *val) {
 	Type *ty = val->getType();
 	return getRepTypeString(ty);
@@ -687,7 +675,6 @@ string DaikonPass::getRepTypeString(Value *val) {
 /**
  * This is another test function
  */
-
 Type*  DaikonPass::getGlobalType(PointerType *ty) {
 	return ty->getContainedType(0);
 }
@@ -702,34 +689,9 @@ string DaikonPass::getDecTypeString(Type *ty) {
 /**
  * This function returns the dec-type of a value
  */
-
 string DaikonPass::getDecTypeString(Value *val) {
 	Type *ty = val->getType();
 	return getRepTypeString(ty);
-}
-
-/**
- * This is another test function
- */
-
-Type*  DaikonPass::getGlobalType(PointerType *ty) {
-	return ty->getContainedType(0);
-}
-
-/**
- * This function returns the dec-type of a type                           
- */
-string DaikonPass::getDecTypeString(Type *ty) {
-	return getTypeString(ty);
-}
-
-/**
- * This function returns the dec-type of a value
- */
-
-string DaikonPass::getDecTypeString(Value *val) {
-	Type *ty = val->getType();
-	return getDecTypeString(ty);
 }
 
 //Handle Structure members                                                                                 

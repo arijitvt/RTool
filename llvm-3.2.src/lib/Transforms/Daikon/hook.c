@@ -8,6 +8,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -147,8 +148,6 @@ void clap_hookFuncBegin(int varCount, ...) {
 		for( i = 0 ; i < varCount ;++i) {
 			char *varName = va_arg(vararg,char*);
 			char *varType = va_arg(vararg,char*);
-			//if(varName[0] == ':') {
-			//Handle the pointer case separately
 #if 0			
 			printf("Variable type coming is %s\t for %s\n",varType,varName);
 			if(strstr(varType,"*")!= NULL) {
@@ -215,15 +214,22 @@ void clap_hookFuncBegin(int varCount, ...) {
 #endif
 
 			if(varName[0] == ':') {
-				int *data = va_arg(vararg,int*);
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%d",*data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				fputs("1\n",fp);
+                            // Handle pointers
+                            if(strstr(varType,"*")!= NULL) {
+                              void *data = va_arg(vararg, void*);
+                              dump_pointer_data_types(fp,data,varName,varType);
+                            }
+                            // Handle arrays
+                            else if(strstr(varType,"[]") != NULL) {
+                              int *data = va_arg(vararg,int*);
+                              char *sizeStr = va_arg(vararg, char*);	
+                              int size = (int) strtol(sizeStr, NULL, 10);
+                              dump_array_data_types(fp, data, varName, varType, size);
+                            }
+                            else {
+                              int *data = va_arg(vararg,int*);
+                              dump_basic_data_types(fp,data,varName,varType);
+                            }
 			}
 			else if(strcmp(varType,"int") ==0 ){
 				int data = va_arg(vararg,int);
@@ -289,31 +295,13 @@ void clap_hookFuncBegin(int varCount, ...) {
 				fputs("\n",fp);
 				fputs("1\n",fp);
 			}	
-			//Handle the pointer case separately
-                        else if(strstr(varType,"*")!= NULL) 
-                        {
-			  dump_pointer_data_types(fp,data,varName,varType);
-			}
-			else if(strstr(varType,"[]") != NULL)
-                        {
-                                  char *sizeStr = va_arg(vararg, char*);	
-                                  int size = (int) strtol(sizeStr, NULL, 10);
-                                  dump_array_data_types(fp, data, varName, varType, size);
-                        }
-                          
-                        else 
-                        {
-                          dump_basic_data_types(fp,data,varName,varType);
-                        }
                   }
 
-
-		}
 		fputs("\n",fp);
 		fclose(fp);
 		va_end(vararg);
 		++callStackCounbter;
-	}
+	    }
 	std_unlock();
 	//pthread_mutex_unlock(&lock);
 }
@@ -350,15 +338,22 @@ void clap_hookFuncEnd(int varCount, ...) {
 
 		       // }
 			if(varName[0] == ':') {
-				int *data = va_arg(vararg,int*);
-				fputs(varName,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				sprintf(buffer,"%d",*data);
-				fputs(buffer,fp);
-				fputs("\n",fp);
-				memset(buffer,'\0',SMALL);
-				fputs("1\n",fp);
+                            // Handle pointers
+                            if(strstr(varType,"*")!= NULL) {
+                              void *data = va_arg(vararg, void*);
+                              dump_pointer_data_types(fp,data,varName,varType);
+                            }
+                            // Handle arrays
+                            else if(strstr(varType,"[]") != NULL) {
+                              int *data = va_arg(vararg,int*);
+                              char *sizeStr = va_arg(vararg, char*);	
+                              int size = (int) strtol(sizeStr, NULL, 10);
+                              dump_array_data_types(fp, data, varName, varType, size);
+                            }
+                            else {
+                              int *data = va_arg(vararg,int*);
+                              dump_basic_data_types(fp,data,varName,varType);
+                            }
 			}
 			else if(strcmp(varType,"int") ==0 ){
 				int data = va_arg(vararg,int);
@@ -424,19 +419,6 @@ void clap_hookFuncEnd(int varCount, ...) {
 				fputs("\n",fp);
 				fputs("1\n",fp);
 			}	
-                        else if(strstr(varType,"*")!= NULL) 
-                        {
-			    dump_pointer_data_types(fp,data,varName,varType);
-			}
-                        else if(strstr(varType,"[]") != NULL)
-                        {
-                                char *sizeStr = va_arg(vararg, char*);	
-                                int size = (int) strtol(sizeStr, NULL, 10);
-                                dump_array_data_types(fp, data, varName, varType, size);
-                        }
-			else  {
-			    dump_basic_data_types(fp,data,varName,varType);
-			}			
 
 		}
 		fputs("\n",fp);
