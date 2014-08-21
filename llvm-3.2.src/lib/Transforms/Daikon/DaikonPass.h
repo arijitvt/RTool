@@ -30,7 +30,9 @@ using namespace llvm;
 #include <vector>
 #include <set>
 #include <fstream>
-#include <algorithm>
+#include <algorithm> 
+#include <sstream>
+#include <iostream>
 using namespace std;
 
 

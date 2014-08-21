@@ -131,6 +131,7 @@ bool DaikonPass::isGlobal(Value *value) {
 
 Value* DaikonPass::getValueForString(StringRef variableName,Module *module) {
 	Constant *valueName = ConstantDataArray::getString(module->getContext(), variableName,true);
+	errs() << "getValueForString() valueName == " << *valueName << '\n';
 	Value *val = new GlobalVariable(*module,valueName->getType(), true, GlobalValue::InternalLinkage,valueName);
 	return val;
 }
@@ -336,7 +337,8 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
 			pointerElementType+="*";
 			type = getValueForString(StringRef(pointerElementType).trim(),module);
-		}else {
+		} 
+                else {
 			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
 			type=getValueForString(StringRef(
 						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
@@ -345,8 +347,46 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 		argList.push_back(valName);
 		argList.push_back(type);
 		argList.push_back(gVal);
+		
+		}
+		//handle array types differently
+	        else if (globalTypeString == ARRAY_TYPE)
+	        {
+	        	errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+	        	string arrayElementType = getArrayElementTypeString(getGlobalType(gVal->getType()));
+	        	arrayElementType += "[]";
+	        	type = getValueForString(StringRef(arrayElementType).trim(), module);
+	        	Value* size;
+			Type *gValType = getGlobalType(gVal->getType());
+	                ArrayType *arrType = dyn_cast<ArrayType>(gValType); 
+			uint64_t arrSize = arrType->getNumElements();
+			cout << arrSize << "\n";
+			std::stringstream  ss;
+			ss << arrSize;
+			string stringVal = ss.str();
+			cout << stringVal << '\n';
+			size = getValueForString(StringRef(stringVal).trim(), module);
+			argList.push_back(valName);
+			argList.push_back(type);
+			argList.push_back(gVal);
+			argList.push_back(size);
 
+
+	        }
+		else
+		{
+			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+			type=getValueForString(StringRef(
+						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
+		
+			argList.push_back(valName);
+			argList.push_back(type);
+			argList.push_back(gVal);
+
+
+		}
 	}
+
 
 	//Now Send the parameters
 	for(vector<Value*>::iterator ArgItr = Arguments.begin(); ArgItr != Arguments.end(); ++ArgItr) {
@@ -640,6 +680,30 @@ string DaikonPass::getRepTypeString(Type *ty) {
  */
 
 string DaikonPass::getRepTypeString(Value *val) {
+	Type *ty = val->getType();
+	return getRepTypeString(ty);
+}
+
+/**
+ * This is another test function
+ */
+
+Type*  DaikonPass::getGlobalType(PointerType *ty) {
+	return ty->getContainedType(0);
+}
+
+/**
+ * This function returns the dec-type of a type                           
+ */
+string DaikonPass::getDecTypeString(Type *ty) {
+	return getTypeString(ty);
+}
+
+/**
+ * This function returns the dec-type of a value
+ */
+
+string DaikonPass::getDecTypeString(Value *val) {
 	Type *ty = val->getType();
 	return getRepTypeString(ty);
 }

@@ -44,7 +44,7 @@ static int flagToWriteVersionIntoDtrace = 0;
 //Local Utility Functions
 static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varType);
 static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType);
-//static void dump_pointer_data_types)
+static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varType, const int size);
 
 
 void writeInfoIntoDtrace() {
@@ -289,6 +289,23 @@ void clap_hookFuncBegin(int varCount, ...) {
 				fputs("\n",fp);
 				fputs("1\n",fp);
 			}	
+			//Handle the pointer case separately
+                        else if(strstr(varType,"*")!= NULL) 
+                        {
+			  dump_pointer_data_types(fp,data,varName,varType);
+			}
+			else if(strstr(varType,"[]") != NULL)
+                        {
+                                  char *sizeStr = va_arg(vararg, char*);	
+                                  int size = (int) strtol(sizeStr, NULL, 10);
+                                  dump_array_data_types(fp, data, varName, varType, size);
+                        }
+                          
+                        else 
+                        {
+                          dump_basic_data_types(fp,data,varName,varType);
+                        }
+                  }
 
 
 		}
@@ -407,6 +424,19 @@ void clap_hookFuncEnd(int varCount, ...) {
 				fputs("\n",fp);
 				fputs("1\n",fp);
 			}	
+                        else if(strstr(varType,"*")!= NULL) 
+                        {
+			    dump_pointer_data_types(fp,data,varName,varType);
+			}
+                        else if(strstr(varType,"[]") != NULL)
+                        {
+                                char *sizeStr = va_arg(vararg, char*);	
+                                int size = (int) strtol(sizeStr, NULL, 10);
+                                dump_array_data_types(fp, data, varName, varType, size);
+                        }
+			else  {
+			    dump_basic_data_types(fp,data,varName,varType);
+			}			
 
 		}
 		fputs("\n",fp);
@@ -759,3 +789,135 @@ static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varT
 	fputs("1\n",fp);
 	memset(buffer,'\0',SMALL);
 }       
+
+static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varType, const int size) {
+
+	char buffer[SMALL];
+	
+	fputs(varName,fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+		
+	
+	
+	// checking to make sure it's of type array
+	assert(strstr(varType,"[]") != NULL);
+	
+	sprintf(buffer,"%p",data);
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+
+	fputs(varName,fp);
+	fputs("[..]",fp);
+	fputs("\n",fp);
+	memset(buffer,'\0',SMALL);
+	
+
+	fprintf(stderr, "varType == %s\n", varType);
+	fprintf(stderr, "size == %d\n", size);
+
+	if(strcmp(varType,"int[]") ==0 ) {	
+		
+		if (data != NULL) {
+			fprintf(stderr, "data == NULL %s\n", data == NULL ? "true" : "false");
+			fprintf(stderr, "data == %p\n", data);
+			fputs("[",fp);
+			int index = 0;
+			for (; index <size; index++)
+			{
+			  fprintf(stderr, "index == %d\n", index);
+			  if (index != size -1)
+			  {
+				  fprintf(fp, " %d, ", ((int*)data)[index]);
+			  }
+			  else
+			  {
+				 fprintf(fp, " %d ", ((int*)data)[index]);
+			  }
+			}
+			fputs("]",fp);		
+		}
+		else {
+			fprintf(stderr, "WARNING NULL POINTERS ARE NOT HANDLED RIGHT NOW");
+			fprintf(fp, "NULL");
+		}
+	}
+        //else if(strcmp(varType,"float[]") ==0 ) {
+        //	float (*d)[size] = (float(*)[size]) data; 	
+	//	fputs("[",fp);
+	//	int index = 0;
+	//	for (; index <size; index++)
+	//	{
+	//	  if (index != size -1)
+	//	  {
+	//		  fprintf(fp, " %f, ", (*(float(*)[size])d)[index]);
+	//	  }
+	//	  else
+	//	  {
+	//	  	 fprintf(fp, " %f ", (*(float(*)[size])d)[index]);
+	//	  }
+	//	}
+	//	fputs("]",fp);
+        //}
+        //else if(strcmp(varType,"double[]") ==0 ) {
+        //	double (*d)[size] = (double(*)[size]) data; 	
+	//	fputs("[",fp);
+	//	int index = 0;
+	//	for (; index <size; index++)
+	//	{
+	//	  if (index != size -1)
+	//	  {
+	//		  fprintf(fp, " %f, ", (*(double(*)[size])d)[index]);
+	//	  }
+	//	  else
+	//	  {
+	//	  	 fprintf(fp, " %f ", (*(double(*)[size])d)[index]);
+	//	  }
+	//	}
+	//	fputs("]",fp);
+        //}
+        //else if(strcmp(varType,"short[]") ==0 ) {
+        //	short (*d)[size] = (short(*)[size]) data; 	
+	//	fputs("[",fp);
+	//	int index = 0;
+	//	for (; index <size; index++)
+	//	{
+	//	  if (index != size -1)
+	//	  {
+	//		  fprintf(fp, " %d, ", (*(short(*)[size])d)[index]);
+	//	  }
+	//	  else
+	//	  {
+	//	  	 fprintf(fp, " %d ", (*(short(*)[size])d)[index]);
+	//	  }
+	//	}
+	//	fputs("]",fp);
+        //}
+        //else if(strcmp(varType,"long[]") ==0 ) {
+        //	long (*d)[size] = (long(*)[size]) data; 	
+	//	fputs("[",fp);
+	//	int index = 0;
+	//	for (; index <size; index++)
+	//	{
+	//	  if (index != size -1)
+	//	  {
+	//		  fprintf(fp, " %ld, ", (*(long(*)[size])d)[index]);
+	//	  }
+	//	  else
+	//	  {
+	//	  	 fprintf(fp, " %ld ", (*(long(*)[size])d)[index]);
+	//	  }
+	//	}
+	//	fputs("]",fp);
+        //}
+	
+
+	
+	
+	fputs(buffer,fp);
+	fputs("\n",fp);
+	fputs("1\n",fp);
+	memset(buffer,'\0',SMALL);
+}
