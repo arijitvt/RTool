@@ -46,6 +46,7 @@ class DaikonPass:public ModulePass {
 		virtual bool runOnModule(Module &module);
 
 	private:
+
                 void hookAtFunctionStart(Function *);
                 void hookAtFunctionEnd(Function *);
 		void  insertDynamicCallAtGlobalAccess(Function *);

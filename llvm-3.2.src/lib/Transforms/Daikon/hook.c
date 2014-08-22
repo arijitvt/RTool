@@ -162,23 +162,26 @@ void clap_hookFuncBegin(int varCount, ...) {
                 char *varType = va_arg(vararg,char*);
                 fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %s\n", varName);
                 fprintf(stderr, "[DEBUG] hookFuncBegin(): varType: %s\n", varType);
-                // markus: globals start with a colon?
+                // handle globals
                 if(varName[0] == ':') {
                         void *data = va_arg(vararg,void*);
                         //Handle the pointer case separately
                         if(strstr(varType,"*")!= NULL) {
                                 fprintf(stderr, "[WARNING] hooFuncBegin(): pointers are not handled\n");
-                                //dump_pointer_data_types(fp,data,varName,varType);
+                                dump_pointer_data_types(fp,data,varName,varType);
                         }
                         else if(strstr(varType,"[]") != NULL)
                         {
                                 fprintf(stderr, "[WARNING] hooFuncBegin(): arrays  are not handled\n");
-                                //char *sizeStr = va_arg(vararg, char*);	
-                                //int size = (int) strtol(sizeStr, NULL, 10);
-                                //dump_array_data_types(fp, data, varName, varType, size);
+                                char *sizeStr = va_arg(vararg, char*);	
+                                int size = (int) strtol(sizeStr, NULL, 10);
+                                dump_array_data_types(fp, data, varName, varType, size);
                         }
                         else if (strstr(varType, "struct") != NULL) {
                                 fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
+                        }
+                        else if (strncmp(varType, "pointer", sizeof("pointer")) == 0) {
+                                dump_pointer_data_types(fp, data, varName, varType);
                         }
                         else {
                                 fprintf(stderr, "[DEBUG] hookFuncBegin(): handling basic data type\n");
@@ -186,11 +189,40 @@ void clap_hookFuncBegin(int varCount, ...) {
                                 dump_basic_data_types(fp,data,varName,varType);
                         }
                 }
+                // return is a special variable name which holds the return
+                // value of the function. The string (return) should probably
+                // be more unique to avoid colisions.
                 else if (strncmp(varName, "return", sizeof("return")) == 0)  {
                   // handle the return value of the function
                   fprintf(stderr, "[DEBUG] hookFuncBegin(): handling return\n");
                   void *data = va_arg(vararg,void*);
                   dump_return_data_types(fp,data,varName,varType);
+                }
+                // handle function arguments? Are these different than globals?
+                else {
+                    void *data = va_arg(vararg,void*);
+                    if(strstr(varType,"*")!= NULL) {
+                            fprintf(stderr, "[WARNING] hooFuncBegin(): pointers are not handled\n");
+                            dump_pointer_data_types(fp,data,varName,varType);
+                    }
+                    else if(strstr(varType,"[]") != NULL)
+                    {
+                            fprintf(stderr, "[WARNING] hooFuncBegin(): arrays  are not handled\n");
+                            char *sizeStr = va_arg(vararg, char*);	
+                            int size = (int) strtol(sizeStr, NULL, 10);
+                            dump_array_data_types(fp, data, varName, varType, size);
+                    }
+                    else if (strstr(varType, "struct") != NULL) {
+                            fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
+                    }
+                    else if (strncmp(varType, "pointer", sizeof("pointer")) == 0) {
+                            dump_pointer_data_types(fp, data, varName, varType);
+                    }
+                    else {
+                            fprintf(stderr, "[DEBUG] hookFuncBegin(): handling basic data type\n");
+                            fprintf(stderr, "[DEBUG] hookFuncBegin(): varName(): %s\n", varName);
+                            dump_basic_data_types(fp,data,varName,varType);
+                    }
                 }
 
       }
@@ -236,38 +268,67 @@ void clap_hookFuncEnd(int varCount, ...) {
                 char *varType = va_arg(vararg,char*);
                 fprintf(stderr, "[DEBUG] hookFuncEnd(): varName: %s\n", varName);
                 fprintf(stderr, "[DEBUG] hookFuncEnd(): varType: %s\n", varType);
-                //if(varName[0] == ':') {
-                //Handle the pointer case separately
-                printf("Exit of the function Variable  Name is: %s\t : and type: %s\n",varName,varType);
-
-               // }
+                // handle globals
                 if(varName[0] == ':') {
                         void *data = va_arg(vararg,void*);
                         //Handle the pointer case separately
                         if(strstr(varType,"*")!= NULL) {
-                                //dump_pointer_data_types(fp,data,varName,varType);
                                 fprintf(stderr, "[WARNING] hooFuncEnd(): pointers are not handled\n");
+                                dump_pointer_data_types(fp,data,varName,varType);
                         }
                         else if(strstr(varType,"[]") != NULL)
                         {
-                                fprintf(stderr, "[WARNING] hooFuncEnd(): arrays are not handled\n");
-                                //char *sizeStr = va_arg(vararg, char*);	
-                                //int size = (int) strtol(sizeStr, NULL, 10);
-                                //dump_array_data_types(fp, data, varName, varType, size);
+                                fprintf(stderr, "[WARNING] hooFuncEnd(): arrays  are not handled\n");
+                                char *sizeStr = va_arg(vararg, char*);	
+                                int size = (int) strtol(sizeStr, NULL, 10);
+                                dump_array_data_types(fp, data, varName, varType, size);
                         }
                         else if (strstr(varType, "struct") != NULL) {
                                 fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
                         }
+                        else if (strncmp(varType, "pointer", sizeof("pointer")) == 0) {
+                                dump_pointer_data_types(fp, data, varName, varType);
+                        }
                         else {
-                                fprintf(stderr, "[DEBUG] hooFuncEnd(): handling basic data type\n");
+                                fprintf(stderr, "[DEBUG] hookFuncEnd(): handling basic data type\n");
+                                fprintf(stderr, "[DEBUG] hookFuncEnd(): varName(): %s\n", varName);
                                 dump_basic_data_types(fp,data,varName,varType);
                         }
-                }			
+                }
+                // return is a special variable name which holds the return
+                // value of the function. The string (return) should probably
+                // be more unique to avoid colisions.
                 else if (strncmp(varName, "return", sizeof("return")) == 0)  {
                   // handle the return value of the function
                   fprintf(stderr, "[DEBUG] hookFuncEnd(): handling return\n");
                   void *data = va_arg(vararg,void*);
                   dump_return_data_types(fp,data,varName,varType);
+                }
+                // handle function arguments? Are these different than globals?
+                else {
+                    void *data = va_arg(vararg,void*);
+                    if(strstr(varType,"*")!= NULL) {
+                            fprintf(stderr, "[WARNING] hooFuncEnd(): pointers are not handled\n");
+                            dump_pointer_data_types(fp,data,varName,varType);
+                    }
+                    else if(strstr(varType,"[]") != NULL)
+                    {
+                            fprintf(stderr, "[WARNING] hooFuncEnd(): arrays  are not handled\n");
+                            char *sizeStr = va_arg(vararg, char*);	
+                            int size = (int) strtol(sizeStr, NULL, 10);
+                            dump_array_data_types(fp, data, varName, varType, size);
+                    }
+                    else if (strstr(varType, "struct") != NULL) {
+                            fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
+                    }
+                    else if (strncmp(varType, "pointer", sizeof("pointer")) == 0) {
+                            dump_pointer_data_types(fp, data, varName, varType);
+                    }
+                    else {
+                            fprintf(stderr, "[DEBUG] hookFuncEnd(): handling basic data type\n");
+                            fprintf(stderr, "[DEBUG] hookFuncEnd(): varName(): %s\n", varName);
+                            dump_basic_data_types(fp,data,varName,varType);
+                    }
                 }
         }
         // Since we've handled all the variables we need to trace simply append
@@ -278,8 +339,6 @@ void clap_hookFuncEnd(int varCount, ...) {
 	std_unlock();
 	//pthread_mutex_unlock(&lock);
 }
-
-
 
 void clap_chcHook(int varCount, ...) {
 	std_lock();
@@ -607,66 +666,60 @@ static void dump_return_data_types(FILE *fp,void *data,char *varName,char *varTy
  * Pointer elemenets should by type casted with 
  * pointer - pointer
  */
-
 static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType) {
 
-	char buffer[SMALL];
-	
 	fputs(varName,fp);
 	fputs("\n",fp);
-	memset(buffer,'\0',SMALL);
-	//sprintf(buffer,"%d",*data);
 	
 	
 	// We will double check that this 
 	// function is handling the pointer type
-	assert(strstr(varType,"*") != NULL);
+	assert(strstr(varType,"*") != NULL || strstr(varType, "pointer") != NULL);
 	
-	//Pointer data is same for 
-	//all the data types
-	sprintf(buffer,"%p",data);
-	fputs(buffer,fp);
+        // Pointer data is same for all the data types. Simply use the address of the pointer.
+        if (data != NULL) {
+	  fprintf(fp, "%p", data);
+        }
+        else {
+	  fprintf(fp, "0");
+        }
 	fputs("\n",fp);
 	fputs("1\n",fp);
-	memset(buffer,'\0',SMALL);
 
-
+        // TODO: Markus: What is this??
+	//fputs(varName,fp);
+	//fputs("[..]",fp);
+	//fputs("\n",fp);
 	
-
-	fputs(varName,fp);
-	fputs("[..]",fp);
-	fputs("\n",fp);
-	memset(buffer,'\0',SMALL);
-	
+        /*
 	if(strcmp(varType,"int*") ==0 ) {
 		int **d = (int**)data;
-        	sprintf(buffer,"[ %d ]",**d);
+        	fprintf(fp,"[ %d ]",**d);
 	} else if(strcmp(varType,"float*") ==0 ) {
 		float **f = (float**)data;
-        	sprintf(buffer,"[ %f ]",**f);
+        	fprintf(fp,"[ %f ]",**f);
         } else if(strcmp(varType,"double*") ==0 ) {
         	double **d = (double**)data;
-        	sprintf(buffer,"[ %f ]",**d);
+        	fprintf(fp,"[ %f ]",**d);
         } else if(strcmp(varType,"short*") ==0 ) {
         	short **d = (short **)data;
-        	sprintf(buffer,"[ %d ]",**d);
+        	fprintf(fp,"[ %d ]",**d);
         }
         else if(strcmp(varType,"long*") ==0 ) {
         	long **d = (long **) data;
-        	sprintf(buffer,"[ %ld ]",**d);
+        	fprintf(fp,"[ %ld ]",**d);
+        }
+        else if (strncmp(varType, "pointer", sizeof("pointer")) == 0) {
+          fprintf(fp, "%p", data);
         }
 	
        // else if(strcmp(varType,"char") ==0 ) {
        // 
        // 	//We have to take care of this section
        // }
-
-	
-	
-	fputs(buffer,fp);
 	fputs("\n",fp);
 	fputs("1\n",fp);
-	memset(buffer,'\0',SMALL);
+        */
 }       
 
 static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varType, const int size) {

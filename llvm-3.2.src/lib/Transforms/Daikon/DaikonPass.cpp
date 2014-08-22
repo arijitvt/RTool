@@ -131,7 +131,7 @@ bool DaikonPass::isGlobal(Value *value) {
 
 Value* DaikonPass::getValueForString(StringRef variableName,Module *module) {
 	Constant *valueName = ConstantDataArray::getString(module->getContext(), variableName,true);
-	errs() << "getValueForString() valueName == " << *valueName << '\n';
+	errs() << "[DEBUG] getValueForString() valueName == " << *valueName << '\n';
 	Value *val = new GlobalVariable(*module,valueName->getType(), true, GlobalValue::InternalLinkage,valueName);
 	return val;
 }
@@ -185,60 +185,56 @@ string DaikonPass::getTypeString(Value *value) {
 }
 
 string DaikonPass::getTypeString(Type *type) {
-	switch(type->getTypeID()) {
-		case Type::IntegerTyID:{
-					       IntegerType *intType=static_cast<IntegerType*>(type);
-					       int bitWidth = intType->getBitWidth();
-					       if(bitWidth == 8) {
-						       return CHAR_TYPE;
-					       }else if(bitWidth == 16) {
-					       		return SHORT_TYPE;
-					       }else if(bitWidth == 32){
-						       return INT_TYPE;
-					       }else if(bitWidth == 64) {
-					       		return LONG_TYPE;
-					       }else {
-						       return INT_TYPE;
-					       }
-				       }
 
-		case Type::FloatTyID:{
-					     return FLOAT_TYPE;
-				     }
-
-		case Type::DoubleTyID:  {
-						return DOUBLE_TYPE;
-					}
-
-		case Type::StructTyID: {
-					       return STRUCT_TYPE;
-				       }
-
-		case Type::VectorTyID: {
-					       return "vector";
-				       }
-
-		case Type::ArrayTyID: {
-					      return ARRAY_TYPE;
-
-				      }
-		case Type::PointerTyID:{
-#if 0
-					       PointerType *ptrType = static_cast<PointerType*>(type);
-					       if(ptrType  ==  ptr32Type || ptrType == ptr64Type) {
-						       return "int*";
-					       }else if(ptrType == ptr8Type) {
-						       return "char*";
-					       }
-#endif
-					       return POINTER_TYPE;
-				       }
-		default:  {
-				  return "invalid";
-			  }
-
-	}
-	return "unknown";
+  Type::TypeID tid = type->getTypeID();
+  if (tid == Type::IntegerTyID) {
+      IntegerType *intType=static_cast<IntegerType*>(type);
+      int bitWidth = intType->getBitWidth();
+      if(bitWidth == sizeof(char) * 8) {
+        return CHAR_TYPE;
+      }
+      else if(bitWidth == sizeof(short) * 8) {
+        return SHORT_TYPE;
+      }
+      else if(bitWidth == sizeof(int) * 8){
+        return INT_TYPE;
+      }
+      else if(bitWidth == sizeof(long) * 8) {
+        return LONG_TYPE;
+      }
+      else {
+        errs() << "[ERROR] Unhandled integer type of size: " << bitWidth << '\n';
+        assert(0 && "Unhandled integer size (see error above)");
+      }
+  }
+  else if (tid == Type::FloatTyID) {
+    return FLOAT_TYPE;
+  }
+  else if (tid == Type::DoubleTyID) {
+    return DOUBLE_TYPE;
+  }
+  else if (tid == Type::StructTyID) {
+    return STRUCT_TYPE;
+  }
+  else if (tid == Type::VectorTyID) {
+      return "vector";
+  }
+  else if (tid == Type::ArrayTyID) {
+    return ARRAY_TYPE;
+  }
+  else if(tid == Type::PointerTyID) {
+    PointerType *ptrType = static_cast<PointerType*>(type);
+    errs() << "[DEBUG] pointer type: " << *ptrType << '\n';
+    errs() << "[DEBUG] pointer element type: " << *(ptrType->getElementType()) << '\n';
+    return POINTER_TYPE;
+  }
+  else {
+    errs() << "[ERROR] Unhandled type, ID: " << tid << '\n';
+    assert(0 && "unhandled type (see above for ID)");
+    return "invalid"; // unreachble
+  }
+  assert(0 && "unreachable");
+  return "unknown";
 }
 
 
@@ -273,7 +269,6 @@ void DaikonPass::putTabInFile(fstream &stream, int tabCount) {
 	}
 }
 
-
 /**
  * This Function will hook at the beginning of every Function
  */
@@ -293,13 +288,19 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 	 */
 	for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
 		Argument *arg = &*argItr;
+                errs() << "[DEBUG] hookAtFunctionStart(): Arg: " << *arg << '\n';
 		Value *val = static_cast<Value*>(arg);
 		if(isSupportedType(val)) {
 			Arguments.push_back(val);
 		}
+                else {
+                    errs() << "[DEBUG] not supported argument\n";
+                }
 	}
 
 	int totalArgumentSize = Arguments.size()+globalList.size();
+        errs() << "[DEBUG] hookAtFunctionStart(): Argument Size: " << Arguments.size() << '\n';
+        errs() << "[DEBUG] Function: " << func->getName() << '\n';
 	/**
 	 * So far the format is varcount,function name, then globals, function params
 	 * The var count will count globals and function params but not the function name
@@ -331,20 +332,8 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
                 Value *valName = getValueForString(StringRef(valNameStr.c_str()),module);
 		string globalTypeString = getTypeString(getGlobalType(gVal->getType()));
 		Value *type;
-		//Handle the pointer types differently
-		if (globalTypeString == POINTER_TYPE) { 
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
-			pointerElementType+="*";
-			type = getValueForString(StringRef(pointerElementType).trim(),module);
-			argList.push_back(valName);
-			argList.push_back(type);
-			argList.push_back(gVal);
-
-		
-		}
 		//handle array types differently
-	        else if (globalTypeString == ARRAY_TYPE)
+	        if (globalTypeString == ARRAY_TYPE)
 	        {
 	        	errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
 	        	string arrayElementType = getArrayElementTypeString(getGlobalType(gVal->getType()));
@@ -367,6 +356,21 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 
 
 	        }
+                // markus: for now, simply label pointers types as "pointer" (treat them as numerical values
+		//Handle the pointer types differently
+		//if (globalTypeString == POINTER_TYPE) { 
+		//	errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+		//	string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
+		//	pointerElementType+="*";
+		//	type = getValueForString(StringRef(pointerElementType).trim(),module);
+                //        errs() << "[DEBUG] hookFunctionStart(): found pointer type\n";
+                //        errs() << "[DEBUG] \tName: " << *valName << '\n';
+                //        errs() << "[DEBUG] \tType: " << *type << '\n';
+		//	argList.push_back(valName);
+		//	argList.push_back(type);
+		//	argList.push_back(gVal);
+		//
+		//}
 		else
 		{
 			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
@@ -455,7 +459,6 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 }
 
 
-
 void DaikonPass::hookAtFunctionEnd(Function *func) {
 	if(doNotInstrument(func->getName())) return;
         //Formalities first
@@ -471,13 +474,19 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 	 */
 	for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
 		Argument *arg = &*argItr;
+                errs() << "[DEBUG] hookAtFunctionEnd(): Arg: " << *arg << '\n';
 		Value *val = static_cast<Value*>(arg);
-		if(!isSupportedType(val)) {
+		if(isSupportedType(val)) {
 			Arguments.push_back(val);
 		}
+                else {
+                    errs() << "[DEBUG] not supported argument\n";
+                }
 	}
 
 	int totalArgumentSize = Arguments.size()+globalList.size();
+        errs() << "[DEBUG] hookAtFunctionEnd(): Argument Size: " << Arguments.size() << '\n';
+        errs() << "[DEBUG] Function: " << func->getName() << '\n';
 
 	
 	/**
@@ -525,17 +534,22 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 
 		string globalTypeString = getTypeString(getGlobalType(gVal->getType()));
 		Value *type;
+                // markus: for now, handle pointers as "pointer" type (numerical values).
 		//Handle the pointer types differently
-		if (globalTypeString == POINTER_TYPE) { 
-			errs()<<"Name of the global variable from end pointer"<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
-			pointerElementType+="*";
-			type = getValueForString(StringRef(pointerElementType).trim(),module);
-		}else {
+		//if (globalTypeString == POINTER_TYPE) { 
+		//	errs()<<"Name of the global variable from end pointer"<<gVal->getName() <<" "<<globalTypeString<<"\n";
+		//	string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
+		//	pointerElementType+="*";
+		//	type = getValueForString(StringRef(pointerElementType).trim(),module);
+                //        errs() << "[DEBUG] hookFunctionEnd(): found pointer type\n";
+                //        errs() << "[DEBUG] \tName: " << *valName << '\n';
+                //        errs() << "[DEBUG] \tType: " << *type << '\n';
+		//}
+                //else {
 			errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			type=getValueForString(StringRef(
-						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
-		}
+                        type = getValueForString(StringRef(
+                                  getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
+		//}
 
 		argList.push_back(valName);
 		argList.push_back(type);
@@ -543,8 +557,9 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 
 	}
 	//Now Send the parameters
-	//for(Function::arg_iterator argItr = func->arg_begin(); argItr != func->arg_end(); ++argItr) {
+        errs() << "[DEBUG] hookAtFunctionEnd(): instrumenting function args\n";
 	for(vector<Value*>::iterator ArgItr = Arguments.begin(); ArgItr != Arguments.end(); ++ArgItr) {
+                errs() << "[DEBUG] instrumenting function end arguments, function name: " << func->getName() << '\n';
 		Value *val= *ArgItr;
 		Value *valName = getValueForString(val->getName(),module);
 		string typeStr = getTypeString(val);
@@ -1082,11 +1097,14 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				} else if (repTypeString == ARRAY_TYPE) {
                                         errs() << "[DEBUG] Array type encountered\n";
 					dumpArrays(declFile,v,ty,1,true);
-				} else if (repTypeString == POINTER_TYPE) {
-                                        errs() << "[DEBUG] Pointer type encountered\n";
-					//dumpStructureMembers(declFile,v,ty,1,true);
-					dumpPointers(declFile,v,ty,1,true);								
-				} else {
+				} 
+                                // markus: for now, handle pointers as numerical values
+                                //else if (repTypeString == POINTER_TYPE) {
+                                //        errs() << "[DEBUG] Pointer type encountered\n";
+				//	//dumpStructureMembers(declFile,v,ty,1,true);
+				//	dumpPointers(declFile,v,ty,1,true);								
+				//} 
+                                else {
                                         errs() << "[DEBUG] Hitting default repTypeString\n";
 					string varName = v->getName().trim().str();
 					tabCount = 1;
@@ -1111,16 +1129,18 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				string typeString = getTypeString(v);
 				StringRef typeStringRef(typeString);
 				errs()<<"Type string for the argument is: "<< typeStringRef << "\n";
-				if(typeString == POINTER_TYPE) {
-                                        errs() << "[DEBUG] Function argument has pointer type\n";
-					PointerType *ptrType = dyn_cast<PointerType>(v->getType());
-					if(arg->hasByValAttr() && 
-							getTypeString(ptrType->getContainedType(0)) == STRUCT_TYPE) {
-						dumpStructureMembers(declFile,v->getName(),ptrType->getContainedType(0),1,false);
-					}else {
-						dumpPointers(declFile,v,ptrType->getContainedType(0),1,false);
-					}
-				}else {  
+
+                                // Markus: For now, label pointers as "pointer" type (treat them as numerical values)
+				//if(typeString == POINTER_TYPE) {
+                                //        errs() << "[DEBUG] Function argument has pointer type\n";
+				//	PointerType *ptrType = dyn_cast<PointerType>(v->getType());
+				//	if(arg->hasByValAttr() && 
+				//			getTypeString(ptrType->getContainedType(0)) == STRUCT_TYPE) {
+				//		dumpStructureMembers(declFile,v->getName(),ptrType->getContainedType(0),1,false);
+				//	}else {
+				//		dumpPointers(declFile,v,ptrType->getContainedType(0),1,false);
+				//	}
+				//}else {  
 					/**
 					 * Array type arguments come as pointer
 					 * so I will take care of them in the pointer handling.
@@ -1138,7 +1158,7 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 					declFile<<"dec-type "<<getDecTypeString(v)<<"\n";
 					putTabInFile(declFile,tabCount);
 					declFile<<"flags is_param\n";
-				}
+				//}
 			}
 
 			if(EntryOrExit == "EXIT") {

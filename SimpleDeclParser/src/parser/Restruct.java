@@ -31,32 +31,53 @@ public class Restruct {
 			//Read A block
 			String line = lineReader.readLine();
 			dataList.add(line);
-			do{
+
+                        // markus: read the decl header on the file?
+			do {
 				if(!lineReader.ready()) {
+                                        System.err.println("[DEBUG] doRestructure(): lineReader not ready");
 					break;
 				}
 				line = lineReader.readLine();
 				if(!line.startsWith("input-language")) {
 					dataList.add(line);	
 				}
-			}while(lineReader.ready() && !line.startsWith("input-language"));
+			} while(lineReader.ready() && !line.startsWith("input-language"));
+                        System.err.println("[DEBUG] Exited first loop in doRestructure(); lineReader.ready() ? "
+                            + (lineReader.ready() ? "true" : "false"));
+                        System.err.println("[DEBUG] on line " + lineReader.getLineNumber() + " of file " + fileName);
+
 			write_date_to_file(outputFileName, false, dataList);
+
+                        // markus: create individual dtrace files for each thread?
 			while(lineReader.ready()) {
 				dataList.clear();
+                                System.err.println("[DEBUG] reading block?");
 				readBlock(lineReader,dataList);
 				ArrayList<Block> blockList = new ArrayList<Block>();
+                                System.err.println("[DEBUG] generating block?");
 				generateBlockList(dataList,blockList);				
-				ArrayList<Block> result =processBlockData(blockList);
+                                System.err.println("[DEBUG] processing block?");
+				ArrayList<Block> result = processBlockData(blockList);
 				dataList.clear();
+                                System.err.println("[DEBUG] generating data stream?");
 				generateDataStreamFromBlockStream(result, dataList);
+                                System.err.println("[DEBUG] writing private info?");
 				writePrivateInfo(outputFileName, true);
+                                System.err.println("[DEBUG] writing date?");
 				write_date_to_file(outputFileName, true, dataList);
 			}
-		} catch (FileNotFoundException e) {
+                        System.err.println("[DEBUG] Exited second loop in doRestructure(); lineReader.ready() ? "
+                            + (lineReader.ready() ? "true" : "false"));
+                        System.err.println("[DEBUG] on line " + lineReader.getLineNumber() + " of file " + fileName);
+		} 
+                catch (FileNotFoundException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
+		} 
+                catch (IOException e) {
 			e.printStackTrace();
-		}finally {
+		} 
+                finally {
 			try {
 				lineReader.close();
 				fileReader.close();
@@ -69,20 +90,26 @@ public class Restruct {
 	}
 	
 	
+        // markus: NOTE: This is just my understanding of the code.
+        // the passed datalist consists of blocks each of which is tagged with
+        // a ThreadId value. The goal of this function is the iterate over the
+        // data list and collect all the blocks.
 	private void generateBlockList(ArrayList<String> dataList,ArrayList<Block> blockList) {
+                // Assumption: Each block is separated by a blank line
 		for(int i = 0 ; i < dataList.size(); ++i) {
 			String line  = "";
 			Block b = new Block();
-			do{
+			do {
 				line = dataList.get(i).trim();
 				if(!line.equals("")) {
 					b.blockInfo.add(dataList.get(i));
 					++i;
 				}		
-			}while(!line.equals("") && i < dataList.size());
+			} while(!line.equals("") && i < dataList.size());
 			b.processBlockInformation();
 			blockList.add(b);
 		}
+                // collect all the blocks
 	}
 
 	private ArrayList<Block> processBlockData(ArrayList<Block> blockList) {
@@ -110,14 +137,14 @@ public class Restruct {
 
 	private void readBlock(DaikonLineNumberReader lineReader,
 			ArrayList<String> dataList) throws IOException {
-		// TODO Auto-generated method stub
 		String line = "";
+                // Skip blank lines in the file
 		do {
 			if(!lineReader.ready()) {
 				break;
 			}
 			line = lineReader.readLine().trim();
-		}while(!line.equals(""));//Skipping done
+		} while(!line.equals(""));
 		
 		do {
 			if(!lineReader.ready()) {
@@ -128,7 +155,12 @@ public class Restruct {
 				dataList.add(line);
 			}
  			
-		}while(lineReader.ready() && !line.startsWith("input-language"));
+		} while(lineReader.ready() && !line.startsWith("input-language"));
+
+                if (!dataList.get(0).startsWith("ThreadId")) {
+                        System.err.println("[ERROR] readBlock(): Malformed block does not start with ThreadID, line: " + dataList.get(0));
+                }
+                System.err.println("[DEBUG] readBlock(): first line of block: " + dataList.get(0));
 	}
 
 	/**

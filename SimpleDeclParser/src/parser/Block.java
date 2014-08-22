@@ -39,8 +39,14 @@ public class Block {
 	}
 	
 	public void processBlockInformation() {
-		//First line must have the thread information
-		assert(blockInfo.get(0).startsWith("ThreadId"));
+		// First line must have the thread information
+                System.err.println("[DEBUG] processBlockInformation(): processing block: " + blockInfo.get(0));
+                System.err.println("[DEBUG] starts with ThreadId? " + (blockInfo.get(0).startsWith("ThreadId") ? "true" : "false"));
+                // a block which does not start with ThreadId is malformed.
+		if (!blockInfo.get(0).startsWith("ThreadId")) {
+                  System.err.println("[ERROR] Malformed block does not start with ThreadID, line: " + blockInfo.get(0));
+                  System.exit(1);
+                }
 		this.threadId = blockInfo.get(0);
 		
 		//Second line must have the funtion name
