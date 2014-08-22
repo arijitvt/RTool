@@ -110,8 +110,8 @@ void DaikonPass::populateGlobals(Module &module) {
 				assert(clapDummyVar != NULL);			
 				continue;
 			}
-			string type1 = getTypeString(globalVar->getInitializer()->getType());
-			string type2 = getTypeString(globalVar->getType());
+			//string type1 = getTypeString(globalVar->getInitializer()->getType());
+			//string type2 = getTypeString(globalVar->getType());
 			globalList.push_back(globalVar);
 		}
 
@@ -551,14 +551,15 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 	}
 
 	//First find the return instruction and push the return value if the return is int type
-	Instruction *target;
+	Instruction *target = NULL;
 	for(Function::iterator bbItr = func->begin(); bbItr != func->end(); ++bbItr) {
 		Instruction *ii = bbItr->getTerminator();
 		if(isa<ReturnInst>(ii)) {
-			target= ii;
+			target = ii;
 			break;
 		}
 	}
+        assert(target != NULL);
 
 	if(hasValidReturn) {
 		ReturnInst *retInst = static_cast<ReturnInst*>(target);
@@ -696,27 +697,44 @@ string DaikonPass::getDecTypeString(Value *val) {
 
 //Handle Structure members                                                                                 
 void DaikonPass::dumpStructureMembers(fstream &declFile,
-		Value *structElement,Type *ty,int tabCount,bool isGlobalStructure) {
+		StringRef structVarName, Type *ty,int tabCount,bool isGlobalStructure) {
 	string structCommonVarName = "var";                                                            
         if(StructType *structType = dyn_cast<StructType>(ty)) {
-		StringRef structVariableName  = structElement->getName();
 		int counter = 0; 
+                errs() << "[DEBUG] Struct Type: " << *structType << '\n';
 		for(Type::subtype_iterator eleItr = structType->element_begin() ;
 				eleItr != structType->element_end(); ++eleItr,++counter) {
 			tabCount = 1;
 			string structCommonVarOnly = structCommonVarName+"_"+to_string(counter);
-			string elementName = structVariableName.trim().str()+"."+structCommonVarOnly;
+			string elementName = structVarName.trim().str()+"."+structCommonVarOnly;
 			Type *elementType = *eleItr;
 			string elementRepType = getRepTypeString(elementType);
+                        // recursively handle nested-nested structs. The
+                        // assumption isthat you can't have an infinitely
+                        // nested struct
+                        if (elementRepType == STRUCT_TYPE) {
+                          errs() << "[DEBUG] Recursive structure encountered\n";
+                          dumpStructureMembers(declFile, elementName, elementType, tabCount, isGlobalStructure);
+                          // we can continue after we finish recursively
+                          // processing a struct since we have represented all
+                          // the elements in the structure. We do not represent
+                          // the struct itself.
+                          continue;
+                        }
 			string elementDecType = getDecTypeString(elementType);
+
+                        errs() << "[DEBUG] Struct type element type: " << *elementType << '\n';
+                        errs() << "[DEBUG] Struct element rep type: " << elementRepType << '\n';
+                        errs() << "[DEBUG] Struct element dec type: " << elementRepType << '\n';
 			
 			putTabInFile(declFile,tabCount);
 			if(isGlobalStructure) {
-			declFile<<"variable ::"<<elementName<<"\n";
-			}else {
+			  declFile<<"variable ::"<<elementName<<"\n";
+			}
+                        else {
 				declFile<<"variable "<<elementName<<"\n";
 			}
-			tabCount =2;
+			tabCount = 2;
 			putTabInFile(declFile,tabCount);
 			declFile<<"var-kind field "<<structCommonVarOnly<<"\n";
 			putTabInFile(declFile,tabCount);
@@ -1032,7 +1050,7 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				putTabInFile(declFile,tabCount);
 				declFile<<"ppt-type subexit\n";
 			}
-			errs()<<"Size of the global variable list" <<globalList.size()<<"\n";
+			errs()<<"Size of the global variable list: " << globalList.size() <<"\n";
 			//Process the Global values
 			for(vector<Value*>::iterator globalItr = globalList.begin(); globalItr != globalList.end(); ++globalItr) {				
 				GlobalVariable *v = static_cast<GlobalVariable*>(*globalItr);
@@ -1044,14 +1062,19 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				Type *ty = getGlobalType(v->getType());
 				string repTypeString = getRepTypeString(ty);
 				//Nested structure members should be treated differently
-				if(repTypeString == STRUCT_TYPE ) {
-					dumpStructureMembers(declFile,v,ty,1,true);
+				if (repTypeString == STRUCT_TYPE ) {
+                                        errs() << "[DEBUG] Struct type global encountered\n";
+					dumpStructureMembers(declFile,v->getName(),ty,1,true);
 				
 				} else if (repTypeString == ARRAY_TYPE) {
+                                        errs() << "[DEBUG] Array type encountered\n";
 					dumpArrays(declFile,v,ty,1,true);
 				} else if (repTypeString == POINTER_TYPE) {
+                                        errs() << "[DEBUG] Pointer type encountered\n";
+					//dumpStructureMembers(declFile,v,ty,1,true);
 					dumpPointers(declFile,v,ty,1,true);								
 				} else {
+                                        errs() << "[DEBUG] Hitting default repTypeString\n";
 					string varName = v->getName().trim().str();
 					tabCount = 1;
 					putTabInFile(declFile,tabCount);
@@ -1074,12 +1097,13 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 				string varName = v->getName().trim().str();
 				string typeString = getTypeString(v);
 				StringRef typeStringRef(typeString);
-				errs()<<"Type string for the argument is : "<<typeStringRef<<"\n";
+				errs()<<"Type string for the argument is: "<< typeStringRef << "\n";
 				if(typeString == POINTER_TYPE) {
+                                        errs() << "[DEBUG] Function argument has pointer type\n";
 					PointerType *ptrType = dyn_cast<PointerType>(v->getType());
 					if(arg->hasByValAttr() && 
 							getTypeString(ptrType->getContainedType(0)) == STRUCT_TYPE) {
-						dumpStructureMembers(declFile,v,ptrType->getContainedType(0),1,false);
+						dumpStructureMembers(declFile,v->getName(),ptrType->getContainedType(0),1,false);
 					}else {
 						dumpPointers(declFile,v,ptrType->getContainedType(0),1,false);
 					}
@@ -1088,6 +1112,7 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 					 * Array type arguments come as pointer
 					 * so I will take care of them in the pointer handling.
 					 */
+                                        errs() << "[DEBUG] Function argument has default type \n";
 					tabCount = 1;
 					putTabInFile(declFile,tabCount);
 					declFile<<"variable "<<varName<<"\n";
@@ -1199,7 +1224,7 @@ void DaikonPass::dumpDeclFile(Module &module) {
 				declFile<<"\n";
 				dumpDeclFileAtEntryAndExit(func,"EXIT",declFile);
 				declFile<<"\n";
-			}else if(funcName == "hookAfter") {
+			} else if(funcName == "hookAfter") {
 				dumpForHookAfterFunction(declFile,"ENTRY",func);
 				dumpForHookAfterFunction(declFile,"EXIT",func);
 			}
