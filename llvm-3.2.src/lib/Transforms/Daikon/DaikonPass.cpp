@@ -337,7 +337,12 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 			string pointerElementType = getPointerElementTypeString(getGlobalType(gVal->getType()));
 			pointerElementType+="*";
 			type = getValueForString(StringRef(pointerElementType).trim(),module);
-		} 
+			argList.push_back(valName);
+			argList.push_back(type);
+			argList.push_back(gVal);
+
+		
+		}
 		//handle array types differently
 	        else if (globalTypeString == ARRAY_TYPE)
 	        {
@@ -670,6 +675,7 @@ string DaikonPass::getRepTypeString(Type *ty) {
  */
 string DaikonPass::getRepTypeString(Value *val) {
 	Type *ty = val->getType();
+
 	return getRepTypeString(ty);
 }
 
