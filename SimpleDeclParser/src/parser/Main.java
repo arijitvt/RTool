@@ -42,9 +42,7 @@ public class Main {
 		if(args[0].equals("--filename")) {
 			input_dtrace_file = args[1];
 		}
-		System.out.println("Input Dtracefile file : "+input_dtrace_file);
-		Thread progressThread = new Thread(new ProgressBar());
-		progressThread.start();
+		System.out.println("Input Dtracefile file: "+ input_dtrace_file);
 		Restruct rs = new Restruct(input_dtrace_file);
 		String intermediate_file = rs.doRestructure();
 		FileIO fileIO = new FileIO(intermediate_file);
@@ -54,14 +52,10 @@ public class Main {
 			fileIO.read_dtrace_file();
 			System.out.println("\n-----Decl Parser Stage is Done----");			
 		} catch (FileFormatException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}finally {
-			progressThread.stop();
-		}
+		} 
 	}
 
 }

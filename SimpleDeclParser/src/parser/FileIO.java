@@ -58,14 +58,18 @@ public class FileIO {
 	public void read_decl_file() throws FileFormatException, IOException {
 		try {
 			fileReader = new FileReader(fileName);
-			System.out.println("Inpuit file "+fileName);
+			System.out.println("Inpuit file: " + fileName);
 			// bufferedReader = new BufferedReader(fileReader);
 			lineNumberReader = new DaikonLineNumberReader(fileReader);
 			List<String> declData = new ArrayList<String>();
 			String line = "";
 			boolean flag = false;
 			do {
+                                // TODO: lineNumberReader can returns null at
+                                // the end of a file. How should this case be
+                                // handled?
 				line = lineNumberReader.readLine();			
+                                assert line != null;
 				if (line.startsWith("input-language") && !flag) {
 					declData.add(line);
 					flag = true;
@@ -77,19 +81,29 @@ public class FileIO {
 					throw new FileFormatException(exceptionMsg);
 				}
 			} while (!line.trim().equals(""));
+
 			flag = false;
 			// Write the decl file's static info
 			write_date_to_file(declContainerFileName, false, declData);
 			declData.clear();
 
-			do {
+                        // loop over the input file until we reach the ine
+                        // which starts with input-language
+                        for (;;) {
 				line = lineNumberReader.readLine();
-				System.out.println("The line is : "+line+" :at line number"+lineNumberReader.getLineNumber());
+                                // lineNumberReader appears to return NULL at the end of the stream
+                                if (line == null) {
+                                  break;
+                                }
+				System.out.println("The line is: " + line + " :at line number "+lineNumberReader.getLineNumber());
 				if (line.startsWith("ppt")) {
 					declData.add(line);
 					flag = true;
 				} else if (line.startsWith("input-language")) {
+                                        // the exit condition of the loop is reaching
+                                        // the line which starts with input-language
 					flag = false;
+                                        System.err.println("[DEBUG] Breaking out of read decl file loop");
 					break;
 				} else if (flag) {
 					declData.add(line);
@@ -99,7 +113,7 @@ public class FileIO {
 							+ lineNumberReader.getLineNumber();
 					throw new FileFormatException(exceptionMsg);
 				}
-			} while (!line.startsWith("input-language"));
+                        }
 
 			write_date_to_file(declContainerFileName, true, declData);
 			declData.clear();
@@ -119,13 +133,14 @@ public class FileIO {
 	 */
 	public void read_dtrace_file() throws FileFormatException, IOException {
 		try {
+                        System.err.println("[DEBUG] reading decl file: " + fileName);
 			fileReader = new FileReader(fileName);
 			lineNumberReader = new DaikonLineNumberReader(fileReader);
 			String line = lineNumberReader.readLine();
 			// Skip the decl part
 			do {
 				line = lineNumberReader.readLine();
-			} while (!line.startsWith("input-language"));
+			} while (line != null && !line.startsWith("input-language"));
 
 			Reader: while (lineNumberReader.ready()) {
 				// Now We will Skip few More locations to get actual reading
