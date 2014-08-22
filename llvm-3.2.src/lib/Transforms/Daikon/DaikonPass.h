@@ -99,7 +99,7 @@ class DaikonPass:public ModulePass {
 
 		//Dump the structure nexted members
 		void dumpStructureMembers(fstream &declFile,
-				Value *structElement,Type *ty,int tabCount,bool isGlobalStructure);
+				StringRef structVarName, Type *ty, int tabCount, bool isGlobalStructure);
 
 		//Dump the various different types of Array
 		void dumpArrays(fstream &declFile,
