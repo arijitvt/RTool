@@ -153,6 +153,8 @@ void clap_hookFuncBegin(int varCount, ...) {
         for (i = 0; i < varCount; ++i) {
                 char *varName = va_arg(vararg,char*);
                 char *varType = va_arg(vararg,char*);
+                fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %s\n", varName);
+                fprintf(stderr, "[DEBUG] hookFuncBegin(): varType: %s\n", varType);
                 if(varName[0] == ':') {
                         void *data = va_arg(vararg,void*);
                         //Handle the pointer case separately
@@ -167,7 +169,9 @@ void clap_hookFuncBegin(int varCount, ...) {
                                 //int size = (int) strtol(sizeStr, NULL, 10);
                                 //dump_array_data_types(fp, data, varName, varType, size);
                         }
-                        
+                        else if (strstr(varType, "struct") != NULL) {
+                                fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
+                        }
                         else {
                                 fprintf(stderr, "[DEBUG] hookFuncBegin(): handling basic data type\n");
                                 fprintf(stderr, "[DEBUG] hookFuncBegin(): varName(): %s\n", varName);
@@ -216,6 +220,8 @@ void clap_hookFuncEnd(int varCount, ...) {
         for( i = 0 ; i < varCount ;++i) {
                 char *varName = va_arg(vararg,char*);
                 char *varType = va_arg(vararg,char*);
+                fprintf(stderr, "[DEBUG] hookFuncEnd(): varName: %s\n", varName);
+                fprintf(stderr, "[DEBUG] hookFuncEnd(): varType: %s\n", varType);
                 //if(varName[0] == ':') {
                 //Handle the pointer case separately
                 printf("Exit of the function Variable  Name is: %s\t : and type: %s\n",varName,varType);
@@ -235,7 +241,9 @@ void clap_hookFuncEnd(int varCount, ...) {
                                 //int size = (int) strtol(sizeStr, NULL, 10);
                                 //dump_array_data_types(fp, data, varName, varType, size);
                         }
-                        
+                        else if (strstr(varType, "struct") != NULL) {
+                                fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
+                        }
                         else {
                                 fprintf(stderr, "[DEBUG] hooFuncEnd(): handling basic data type\n");
                                 dump_basic_data_types(fp,data,varName,varType);
@@ -505,8 +513,8 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
 	}
 	else if(strcmp(varType,"char") ==0 )
 	{
-                fprintf(stderr, "[WARNING] dump_basic_data_types(): char not handled\n");
-                sprintf(buffer, "%s", "CHAR?");
+                fprintf(stderr, "[WARNING] characters are handled as unsigned integers\n");
+                sprintf(buffer, "%u", *(char *)data);
 		//We have to take care of this section
 	}
 	else if(strcmp(varType,"short") ==0 )
