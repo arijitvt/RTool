@@ -46,6 +46,13 @@ static int flagToWriteVersionIntoDtrace = 0;
 static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varType);
 static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType);
 static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varType, const int size);
+// handle the variable named "return". This is a special variable which
+// represents the return value of a function. It is handled slightly different
+// than a basic_data_type (even if, for example, a function returns an
+// integer). For the other data types, the value passed is a _pointer_ but for
+// return it passes the actual integer... But then what happens when you return
+// a dynamic value/pointer? No idea.
+static void dump_return_data_types(FILE *fp,void *data,char *varName,char *varType);
 
 void writeInfoIntoDtrace() {
 	flagToWriteVersionIntoDtrace = 1;
@@ -155,6 +162,7 @@ void clap_hookFuncBegin(int varCount, ...) {
                 char *varType = va_arg(vararg,char*);
                 fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %s\n", varName);
                 fprintf(stderr, "[DEBUG] hookFuncBegin(): varType: %s\n", varType);
+                // markus: globals start with a colon?
                 if(varName[0] == ':') {
                         void *data = va_arg(vararg,void*);
                         //Handle the pointer case separately
@@ -177,6 +185,12 @@ void clap_hookFuncBegin(int varCount, ...) {
                                 fprintf(stderr, "[DEBUG] hookFuncBegin(): varName(): %s\n", varName);
                                 dump_basic_data_types(fp,data,varName,varType);
                         }
+                }
+                else if (strncmp(varName, "return", sizeof("return")) == 0)  {
+                  // handle the return value of the function
+                  fprintf(stderr, "[DEBUG] hookFuncBegin(): handling return\n");
+                  void *data = va_arg(vararg,void*);
+                  dump_return_data_types(fp,data,varName,varType);
                 }
 
       }
@@ -249,7 +263,12 @@ void clap_hookFuncEnd(int varCount, ...) {
                                 dump_basic_data_types(fp,data,varName,varType);
                         }
                 }			
-
+                else if (strncmp(varName, "return", sizeof("return")) == 0)  {
+                  // handle the return value of the function
+                  fprintf(stderr, "[DEBUG] hookFuncEnd(): handling return\n");
+                  void *data = va_arg(vararg,void*);
+                  dump_return_data_types(fp,data,varName,varType);
+                }
         }
         // Since we've handled all the variables we need to trace simply append
         // a new line, close the file, and unlock the mutex
@@ -490,10 +509,10 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
 	if(strcmp(varName,"return") == 0) {
 		if(data == NULL) {
 			printf("Data is coming as null@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+		        return;
 		}else {
 			printf("Data is NOT null $$$$$$$$$$$$$$$$\n");
 		}
-		return ;
 	}
 
 
@@ -501,7 +520,13 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
 
 	if(strcmp(varType,"int") ==0 )
 	{
+          if (data != NULL) {
 		sprintf(buffer,"%d",*(int*)data);
+          }
+          else {
+		sprintf(buffer,"%d",*(int*)data);
+          }
+
 	}
 	else if(strcmp(varType,"float") ==0 )
 	{
@@ -532,6 +557,45 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
 	memset(buffer,'\0',SMALL);
 
 }
+static void dump_return_data_types(FILE *fp,void *data,char *varName,char *varType) {
+  fputs(varName,fp);
+  fputs("\n",fp);
+  //sprintf(buffer,"%d",*data);
+
+  printf("Variable type coming is %s\t for %s\n",varType,varName);
+
+  if(strcmp(varType,"int") ==0 )
+  {
+    fprintf(fp,"%d",(int)data);
+  }
+  else if(strcmp(varType,"char") ==0 )
+  {
+    fprintf(fp, "%u", (char)data);
+  }
+  else if(strcmp(varType,"short") ==0 )
+  {
+    fprintf(fp,"%d",(int)data);
+  }
+  else if(strcmp(varType,"long") ==0 )
+  {
+    fprintf(fp,"%ld",(long)data);
+  }	
+  else if (strncmp(varType, "pointer", sizeof("pointer")) == 0) {
+    if (data != NULL) {
+      fprintf(fp, "%p", data);
+    }
+    else {
+      fprintf(fp, "0");
+    }
+  }
+  else {
+    fprintf(stderr, "[WARNING] dump_return_data_types(): unhandled type: %s\n", varType);
+    return;
+  }
+  fputs("\n",fp);
+  fputs("1\n",fp);
+}
+
 
 /**
  * This function hadnle the dumping case for the

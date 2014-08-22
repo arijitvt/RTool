@@ -568,7 +568,9 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 
 	if(hasValidReturn) {
 		ReturnInst *retInst = static_cast<ReturnInst*>(target);
+                errs() << "[DEBUG] Return Instruction: " << *retInst << '\n';
 		Value *val= retInst->getReturnValue();
+                errs() << "[DEBUG] Value Representation: " << *val << '\n';
 		Value *valName = getValueForString("return",module);
 		Value *type=getValueForString(StringRef(getTypeString(val).c_str()).trim(),module);
 		argList.push_back(valName);
@@ -705,6 +707,11 @@ string DaikonPass::getDecTypeString(Value *val) {
 void DaikonPass::dumpStructureMembers(fstream &declFile,
 		StringRef structVarName, Type *ty,int tabCount,bool isGlobalStructure) {
 	string structCommonVarName = "var";                                                            
+
+        // TODO: Handle structures somehow.
+        errs() << "[WARNING] Structures are not supported\n";
+        return;
+
         if(StructType *structType = dyn_cast<StructType>(ty)) {
 		int counter = 0; 
                 errs() << "[DEBUG] Struct Type: " << *structType << '\n';
