@@ -302,8 +302,8 @@ void clap_hookFuncBegin(int varCount, ...) {
 	    }
 	std_unlock();
 	//pthread_mutex_unlock(&lock);
+	}
 }
-
 
 void clap_hookFuncEnd(int varCount, ...) {
 	std_lock();
