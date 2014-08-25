@@ -222,11 +222,14 @@ string DaikonPass::getTypeString(Type *type) {
   else if (tid == Type::ArrayTyID) {
     return ARRAY_TYPE;
   }
-  else if(tid == Type::PointerTyID) {
+  else if (tid == Type::PointerTyID) {
     PointerType *ptrType = static_cast<PointerType*>(type);
     errs() << "[DEBUG] pointer type: " << *ptrType << '\n';
     errs() << "[DEBUG] pointer element type: " << *(ptrType->getElementType()) << '\n';
     return POINTER_TYPE;
+  }
+  else if (tid == Type::VoidTyID) {
+    return VOID_TYPE;
   }
   else {
     errs() << "[ERROR] Unhandled type, ID: " << tid << '\n';
@@ -332,31 +335,34 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
                 Value *valName = getValueForString(StringRef(valNameStr.c_str()),module);
 		string globalTypeString = getTypeString(getGlobalType(gVal->getType()));
 		Value *type;
+                // markus: for now, simply label pointers types as "pointer"
+                // (treat them as numerical values) and do the same for arrays.
+                // In DaikonPass.h, both ARRAY_TYPE and POINTER_TYPE are
+                // defined to be "pointer"
 		//handle array types differently
-	        if (globalTypeString == ARRAY_TYPE)
-	        {
-	        	errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-	        	string arrayElementType = getArrayElementTypeString(getGlobalType(gVal->getType()));
-	        	arrayElementType += "[]";
-	        	type = getValueForString(StringRef(arrayElementType).trim(), module);
-	        	Value* size;
-			Type *gValType = getGlobalType(gVal->getType());
-	                ArrayType *arrType = dyn_cast<ArrayType>(gValType); 
-			uint64_t arrSize = arrType->getNumElements();
-			cout << arrSize << "\n";
-			std::stringstream  ss;
-			ss << arrSize;
-			string stringVal = ss.str();
-			cout << stringVal << '\n';
-			size = getValueForString(StringRef(stringVal).trim(), module);
-			argList.push_back(valName);
-			argList.push_back(type);
-			argList.push_back(gVal);
-			argList.push_back(size);
+	        //if (globalTypeString == ARRAY_TYPE)
+	        //{
+	        //	errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+	        //	string arrayElementType = getArrayElementTypeString(getGlobalType(gVal->getType()));
+	        //	arrayElementType += "[]";
+	        //	type = getValueForString(StringRef(arrayElementType).trim(), module);
+	        //	Value* size;
+		//	Type *gValType = getGlobalType(gVal->getType());
+	        //        ArrayType *arrType = dyn_cast<ArrayType>(gValType); 
+		//	uint64_t arrSize = arrType->getNumElements();
+		//	cout << arrSize << "\n";
+		//	std::stringstream  ss;
+		//	ss << arrSize;
+		//	string stringVal = ss.str();
+		//	cout << stringVal << '\n';
+		//	size = getValueForString(StringRef(stringVal).trim(), module);
+		//	argList.push_back(valName);
+		//	argList.push_back(type);
+		//	argList.push_back(gVal);
+		//	argList.push_back(size);
 
 
-	        }
-                // markus: for now, simply label pointers types as "pointer" (treat them as numerical values
+	        //}
 		//Handle the pointer types differently
 		//if (globalTypeString == POINTER_TYPE) { 
 		//	errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
@@ -371,8 +377,8 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 		//	argList.push_back(gVal);
 		//
 		//}
-		else
-		{
+		//else
+		//{
 			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
 			type=getValueForString(StringRef(
 						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
@@ -382,7 +388,7 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 			argList.push_back(gVal);
 
 
-		}
+		//}
 	}
 
 
@@ -1094,17 +1100,21 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
                                         errs() << "[DEBUG] Struct type global encountered\n";
 					dumpStructureMembers(declFile,v->getName(),ty,1,true);
 				
-				} else if (repTypeString == ARRAY_TYPE) {
-                                        errs() << "[DEBUG] Array type encountered\n";
-					dumpArrays(declFile,v,ty,1,true);
 				} 
-                                // markus: for now, handle pointers as numerical values
+                                // markus: for now, simply label pointers types as "pointer"
+                                // (treat them as numerical values) and do the same for arrays.
+                                // In DaikonPass.h, both ARRAY_TYPE and POINTER_TYPE are
+                                // defined to be "pointer"
+                                //else if (repTypeString == ARRAY_TYPE) {
+                                //        errs() << "[DEBUG] Array type encountered\n";
+				//	dumpArrays(declFile,v,ty,1,true);
+				//} 
                                 //else if (repTypeString == POINTER_TYPE) {
                                 //        errs() << "[DEBUG] Pointer type encountered\n";
 				//	//dumpStructureMembers(declFile,v,ty,1,true);
 				//	dumpPointers(declFile,v,ty,1,true);								
 				//} 
-                                else {
+                                //else {
                                         errs() << "[DEBUG] Hitting default repTypeString\n";
 					string varName = v->getName().trim().str();
 					tabCount = 1;
@@ -1117,7 +1127,7 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 					declFile<<"rep-type "<<repTypeString<<"\n";;
 					putTabInFile(declFile,tabCount);
 					declFile<<"dec-type "<<getDecTypeString(ty)<<"\n";
-				}
+				//}
 			
 			}
 			//Process function Params

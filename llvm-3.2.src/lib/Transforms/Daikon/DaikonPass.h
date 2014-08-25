@@ -185,10 +185,13 @@ static const string FLOAT_TYPE  = "float";
 //Nested Types 
 static const string STRUCT_TYPE = "struct";
 
-//Sequential Types
-static const string ARRAY_TYPE 	= "array";
+//Sequential Types. Treat array's as pointers
+static const string ARRAY_TYPE 	= "pointer";
 
 //Pointer Type
 static const string POINTER_TYPE = "pointer";
+
+// void type
+static const string VOID_TYPE = "void";
 
 #endif

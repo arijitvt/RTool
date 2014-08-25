@@ -46,13 +46,8 @@ static int flagToWriteVersionIntoDtrace = 0;
 static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varType);
 static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varType);
 static void dump_array_data_types(FILE *fp,void *data,char *varName,char *varType, const int size);
-// handle the variable named "return". This is a special variable which
-// represents the return value of a function. It is handled slightly different
-// than a basic_data_type (even if, for example, a function returns an
-// integer). For the other data types, the value passed is a _pointer_ but for
-// return it passes the actual integer... But then what happens when you return
-// a dynamic value/pointer? No idea.
-static void dump_return_data_types(FILE *fp,void *data,char *varName,char *varType);
+// Handle scalar variables. These are literal values passed in the program, eg, argc.
+static void dump_scalar_data_types(FILE *fp,void *data,char *varName,char *varType);
 
 void writeInfoIntoDtrace() {
 	flagToWriteVersionIntoDtrace = 1;
@@ -160,11 +155,15 @@ void clap_hookFuncBegin(int varCount, ...) {
         for (i = 0; i < varCount; ++i) {
                 char *varName = va_arg(vararg,char*);
                 char *varType = va_arg(vararg,char*);
+                assert(varName && "varName is NULL");
+                assert(varType && "varType is NULL");
                 fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %s\n", varName);
                 fprintf(stderr, "[DEBUG] hookFuncBegin(): varType: %s\n", varType);
+
                 // handle globals
                 if(varName[0] == ':') {
                         void *data = va_arg(vararg,void*);
+                        assert(data && "data is NULL");
                         //Handle the pointer case separately
                         if(strstr(varType,"*")!= NULL) {
                                 fprintf(stderr, "[WARNING] hooFuncBegin(): pointers are not handled\n");
@@ -173,9 +172,11 @@ void clap_hookFuncBegin(int varCount, ...) {
                         else if(strstr(varType,"[]") != NULL)
                         {
                                 fprintf(stderr, "[WARNING] hooFuncBegin(): arrays  are not handled\n");
+                                /*
                                 char *sizeStr = va_arg(vararg, char*);	
                                 int size = (int) strtol(sizeStr, NULL, 10);
                                 dump_array_data_types(fp, data, varName, varType, size);
+                                */
                         }
                         else if (strstr(varType, "struct") != NULL) {
                                 fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
@@ -196,7 +197,7 @@ void clap_hookFuncBegin(int varCount, ...) {
                   // handle the return value of the function
                   fprintf(stderr, "[DEBUG] hookFuncBegin(): handling return\n");
                   void *data = va_arg(vararg,void*);
-                  dump_return_data_types(fp,data,varName,varType);
+                  dump_scalar_data_types(fp,data,varName,varType);
                 }
                 // handle function arguments? Are these different than globals?
                 else {
@@ -208,9 +209,12 @@ void clap_hookFuncBegin(int varCount, ...) {
                     else if(strstr(varType,"[]") != NULL)
                     {
                             fprintf(stderr, "[WARNING] hooFuncBegin(): arrays  are not handled\n");
+                            /*
                             char *sizeStr = va_arg(vararg, char*);	
                             int size = (int) strtol(sizeStr, NULL, 10);
+                            assert(0 && "array type");
                             dump_array_data_types(fp, data, varName, varType, size);
+                            */
                     }
                     else if (strstr(varType, "struct") != NULL) {
                             fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
@@ -219,9 +223,9 @@ void clap_hookFuncBegin(int varCount, ...) {
                             dump_pointer_data_types(fp, data, varName, varType);
                     }
                     else {
-                            fprintf(stderr, "[DEBUG] hookFuncBegin(): handling basic data type\n");
+                            fprintf(stderr, "[DEBUG] hookFuncBegin(): handling scalar data type\n");
                             fprintf(stderr, "[DEBUG] hookFuncBegin(): varName(): %s\n", varName);
-                            dump_basic_data_types(fp,data,varName,varType);
+                            dump_scalar_data_types(fp,data,varName,varType);
                     }
                 }
 
@@ -278,10 +282,13 @@ void clap_hookFuncEnd(int varCount, ...) {
                         }
                         else if(strstr(varType,"[]") != NULL)
                         {
-                                fprintf(stderr, "[WARNING] hooFuncEnd(): arrays  are not handled\n");
+                                fprintf(stderr, "[WARNING] hookFuncEnd(): arrays are not handled\n");
+                                /*
                                 char *sizeStr = va_arg(vararg, char*);	
                                 int size = (int) strtol(sizeStr, NULL, 10);
+                                assert(0 && "array type");
                                 dump_array_data_types(fp, data, varName, varType, size);
+                                */
                         }
                         else if (strstr(varType, "struct") != NULL) {
                                 fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
@@ -302,21 +309,23 @@ void clap_hookFuncEnd(int varCount, ...) {
                   // handle the return value of the function
                   fprintf(stderr, "[DEBUG] hookFuncEnd(): handling return\n");
                   void *data = va_arg(vararg,void*);
-                  dump_return_data_types(fp,data,varName,varType);
+                  dump_scalar_data_types(fp,data,varName,varType);
                 }
                 // handle function arguments? Are these different than globals?
                 else {
                     void *data = va_arg(vararg,void*);
                     if(strstr(varType,"*")!= NULL) {
-                            fprintf(stderr, "[WARNING] hooFuncEnd(): pointers are not handled\n");
                             dump_pointer_data_types(fp,data,varName,varType);
                     }
                     else if(strstr(varType,"[]") != NULL)
                     {
-                            fprintf(stderr, "[WARNING] hooFuncEnd(): arrays  are not handled\n");
+                            fprintf(stderr, "[WARNING] hookFuncEnd(): arrays are not handled\n");
+                            /*
                             char *sizeStr = va_arg(vararg, char*);	
                             int size = (int) strtol(sizeStr, NULL, 10);
+                            assert(0 && "array type");
                             dump_array_data_types(fp, data, varName, varType, size);
+                            */
                     }
                     else if (strstr(varType, "struct") != NULL) {
                             fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
@@ -325,9 +334,9 @@ void clap_hookFuncEnd(int varCount, ...) {
                             dump_pointer_data_types(fp, data, varName, varType);
                     }
                     else {
-                            fprintf(stderr, "[DEBUG] hookFuncEnd(): handling basic data type\n");
+                            fprintf(stderr, "[DEBUG] hookFuncEnd(): handling scalar data type\n");
                             fprintf(stderr, "[DEBUG] hookFuncEnd(): varName(): %s\n", varName);
-                            dump_basic_data_types(fp,data,varName,varType);
+                            dump_scalar_data_types(fp,data,varName,varType);
                     }
                 }
         }
@@ -616,12 +625,10 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
 	memset(buffer,'\0',SMALL);
 
 }
-static void dump_return_data_types(FILE *fp,void *data,char *varName,char *varType) {
+static void dump_scalar_data_types(FILE *fp,void *data,char *varName,char *varType) {
   fputs(varName,fp);
   fputs("\n",fp);
   //sprintf(buffer,"%d",*data);
-
-  printf("Variable type coming is %s\t for %s\n",varType,varName);
 
   if(strcmp(varType,"int") ==0 )
   {
@@ -648,7 +655,7 @@ static void dump_return_data_types(FILE *fp,void *data,char *varName,char *varTy
     }
   }
   else {
-    fprintf(stderr, "[WARNING] dump_return_data_types(): unhandled type: %s\n", varType);
+    fprintf(stderr, "[WARNING] dump_scalar_data_types(): unhandled type: %s\n", varType);
     return;
   }
   fputs("\n",fp);
