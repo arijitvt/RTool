@@ -171,6 +171,8 @@ def all_clean():
         os.system("rm -f *.o")
         os.system("rm -f *.s")
         os.system("rm -f a.out")
+        os.system("rm -f *.out")
+        os.system("rm -f *.inv.gz")
         os.system("rm -rf normal_trace/")
         os.system("rm -rf daikon-output/")
         os.system("rm -f yices_debug_log.log")
