@@ -161,6 +161,20 @@ def all_clean():
 		os.system(command_string);
 		os.chdir("../");
 
+        os.system("rm -rf arijit/");
+        os.system("rm -rf tr_gen/");
+        os.system("rm -rf rtool_res");
+        os.system("rm -f hook.c")
+        os.system("rm -f hook.h")
+        os.system("rm -f program.dtrace")
+        os.system("rm -f output.decl")
+        os.system("rm -f *.o")
+        os.system("rm -f *.s")
+        os.system("rm -f a.out")
+        os.system("rm -rf normal_trace/")
+        os.system("rm -rf daikon-output/")
+        os.system("rm -f yices_debug_log.log")
+
 	return
 
 def main_rtool():
