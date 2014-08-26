@@ -223,7 +223,8 @@ void clap_hookFuncBegin(int varCount, ...) {
                             fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
                     }
                     else if (strncmp(varType, "pointer", sizeof("pointer")) == 0) {
-                            dump_pointer_data_types(fp, data, varName, varType);
+                            // passed as a pointer or a scalar??
+                            dump_scalar_data_types(fp, data, varName, varType);
                     }
                     else {
                             fprintf(stderr, "[DEBUG] hookFuncBegin(): handling scalar data type\n");
@@ -335,7 +336,8 @@ void clap_hookFuncEnd(int varCount, ...) {
                             fprintf(stderr, "[WARNING] hooFuncEnd(): structs are not handled\n");
                     }
                     else if (strncmp(varType, "pointer", sizeof("pointer")) == 0) {
-                            dump_pointer_data_types(fp, data, varName, varType);
+                            // TODO: is a pointer arg passed as a scalar or a pointer?
+                            dump_scalar_data_types(fp, data, varName, varType);
                     }
                     else {
                             fprintf(stderr, "[DEBUG] hookFuncEnd(): handling scalar data type\n");
@@ -686,10 +688,13 @@ static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varT
 	// We will double check that this 
 	// function is handling the pointer type
 	assert(strstr(varType,"*") != NULL || strstr(varType, "pointer") != NULL);
+        fprintf(stderr, "[DEBUG] dump_pointer_data_types(): data : %lu\n", (uintptr_t) data);
+        fprintf(stderr, "[DEBUG] dump_pointer_data_types(): *data : %lu\n", *((unsigned long *) data));
 	
         // Pointer data is same for all the data types. Simply use the address of the pointer.
         if (data != NULL) {
-	  fprintf(fp, "%lu", (uintptr_t) data);
+	  //fprintf(fp, "%lu", (uintptr_t) data);
+	  fprintf(fp, "%lu", *((unsigned long *) data));
         }
         else {
 	  fprintf(fp, "0");

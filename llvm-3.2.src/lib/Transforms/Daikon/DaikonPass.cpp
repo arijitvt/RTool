@@ -1746,6 +1746,7 @@ bool DummyVarInsertionPass::runOnModule(Module &module) {
 
 void DummyVarInsertionPass::insertDummyStoreIntoFunction (Function *func) {
 	Instruction *target = NULL;
+        errs() << "[DEBUG] insertDummyStoreIntoFunction(): running on " << func->getName() << '\n';
 	for(inst_iterator instItr = inst_begin(func) ; instItr != inst_end(func) ; ++instItr) {
 		if(!isa<AllocaInst>(&*instItr)) {
 			target = &*instItr;
