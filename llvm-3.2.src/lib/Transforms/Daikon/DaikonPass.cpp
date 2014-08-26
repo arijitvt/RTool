@@ -379,16 +379,22 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 		//}
 		//else
 		//{
-			errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-			type=getValueForString(StringRef(
-						getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
-		
-			argList.push_back(valName);
-			argList.push_back(type);
-			argList.push_back(gVal);
+                if (globalTypeString == STRUCT_TYPE) {
+                  errs() << "[WARNING] hookatFunctionStart(): struct type not supported\n";
+                  // TODO: Is it OK to just return here? Is the IR malformed?
+                  return;
+                }
+                else {
+                      errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+                      type=getValueForString(StringRef(
+                                              getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
+
+                      argList.push_back(valName);
+                      argList.push_back(type);
+                      argList.push_back(gVal);
+                }
 
 
-		//}
 	}
 
 
@@ -552,10 +558,20 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
                 //        errs() << "[DEBUG] \tType: " << *type << '\n';
 		//}
                 //else {
-			errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-                        type = getValueForString(StringRef(
-                                  getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
+			//errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+                        //type = getValueForString(StringRef(
+                                  //getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
 		//}
+                if (globalTypeString == STRUCT_TYPE) {
+                  errs() << "[WARNING] hookAtFunctionEnd(): Struct types not handled\n";
+                  // is it OK to just return here? Is the IR malformed?
+                  return;
+                }
+                else {
+                  errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+                  type = getValueForString(StringRef(
+                            getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
+                }
 
 		argList.push_back(valName);
 		argList.push_back(type);
