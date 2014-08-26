@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -688,7 +689,7 @@ static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varT
 	
         // Pointer data is same for all the data types. Simply use the address of the pointer.
         if (data != NULL) {
-	  fprintf(fp, "%p", data);
+	  fprintf(fp, "%lu", (uintptr_t) data);
         }
         else {
 	  fprintf(fp, "0");
