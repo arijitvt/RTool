@@ -381,8 +381,7 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 		//{
                 if (globalTypeString == STRUCT_TYPE) {
                   errs() << "[WARNING] hookatFunctionStart(): struct type not supported\n";
-                  // TODO: Is it OK to just return here? Is the IR malformed?
-                  return;
+                  continue;
                 }
                 else {
                       errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
@@ -564,8 +563,8 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 		//}
                 if (globalTypeString == STRUCT_TYPE) {
                   errs() << "[WARNING] hookAtFunctionEnd(): Struct types not handled\n";
-                  // is it OK to just return here? Is the IR malformed?
-                  return;
+                  // TODO: is it OK to just continue  here? Is the IR malformed?
+                  continue;
                 }
                 else {
                   errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
