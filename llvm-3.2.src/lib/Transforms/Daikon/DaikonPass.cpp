@@ -571,16 +571,16 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
                         //type = getValueForString(StringRef(
                                   //getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
 		//}
-                //if (globalTypeString == STRUCT_TYPE) {
-                //  errs() << "[WARNING] hookAtFunctionEnd(): Struct types not handled\n";
-                //  // TODO: is it OK to just continue  here? Is the IR malformed?
-                //  continue;
-                //}
-                //else {
+                if (globalTypeString == STRUCT_TYPE) {
+                  errs() << "[WARNING] hookAtFunctionEnd(): Struct types not handled\n";
+                  // TODO: is it OK to just continue  here? Is the IR malformed?
+                  continue;
+                }
+                else {
                   errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
                   type = getValueForString(StringRef(
                             getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
-                //}
+                }
 
                 errs() << "[DEBUG] hookAtFunctionEnd() valueName: " << *valName << '\n';
 		argList.push_back(valName);
