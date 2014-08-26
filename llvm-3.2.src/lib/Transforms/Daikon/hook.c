@@ -155,10 +155,12 @@ void clap_hookFuncBegin(int varCount, ...) {
         for (i = 0; i < varCount; ++i) {
                 char *varName = va_arg(vararg,char*);
                 char *varType = va_arg(vararg,char*);
+                fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %p\n", varName);
                 assert(varName && "varName is NULL");
+                fprintf(stderr, "[DEBUG] hookFuncBegin(): *varName: %s\n", varName);
+                fprintf(stderr, "[DEBUG] hookFuncBegin(): varType: %p\n", varType);
                 assert(varType && "varType is NULL");
-                fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %s\n", varName);
-                fprintf(stderr, "[DEBUG] hookFuncBegin(): varType: %s\n", varType);
+                fprintf(stderr, "[DEBUG] hookFuncBegin(): *varType: %s\n", varType);
 
                 // handle globals
                 if(varName[0] == ':') {
@@ -186,7 +188,7 @@ void clap_hookFuncBegin(int varCount, ...) {
                         }
                         else {
                                 fprintf(stderr, "[DEBUG] hookFuncBegin(): handling basic data type\n");
-                                fprintf(stderr, "[DEBUG] hookFuncBegin(): varName(): %s\n", varName);
+                                fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %s\n", varName);
                                 dump_basic_data_types(fp,data,varName,varType);
                         }
                 }
@@ -224,12 +226,13 @@ void clap_hookFuncBegin(int varCount, ...) {
                     }
                     else {
                             fprintf(stderr, "[DEBUG] hookFuncBegin(): handling scalar data type\n");
-                            fprintf(stderr, "[DEBUG] hookFuncBegin(): varName(): %s\n", varName);
+                            fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %s\n", varName);
                             dump_scalar_data_types(fp,data,varName,varType);
                     }
                 }
-
-      }
+                fprintf(stderr, "[DEBUG] hookFunctionBegin(): finished processing arg: %s\n", varName);
+      } // for (i = 0; i < varCount; ++i)
+    fprintf(stderr, "[DEBUG] hookFuncBegin(): finished processing arguments\n");
     // Since we've handled all the variables we need to trace simply append
     // a new line, close the file, and unlock the mutex
     fputs("\n",fp);

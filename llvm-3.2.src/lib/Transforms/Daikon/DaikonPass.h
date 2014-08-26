@@ -122,7 +122,7 @@ class DaikonPass:public ModulePass {
 		Type* getPointerElementType(Type *ty);
 
 	private:
-		vector<Value*>  globalList;
+		vector<GlobalVariable*>  globalList;
 		vector<string> 	doNotInstrumentFunctions;
 		vector<string> programPoints;
 		Type *voidType ;

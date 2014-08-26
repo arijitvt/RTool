@@ -101,8 +101,13 @@ bool DaikonPass::runOnModule(Module &module) {
  * */
 void DaikonPass::populateGlobals(Module &module) {
 	globalList.clear();
+        errs() << "[DEBUG] populating globals\n";
 	for(Module::global_iterator globalItr = module.global_begin(); globalItr != module.global_end(); ++globalItr) {
 		GlobalVariable *globalVar = &*globalItr;
+                if (!isSupportedType(globalVar)) {
+                  errs() << "[WARNING] Unsupported global type: " << *globalVar << '\n';
+                  continue;
+                }
 		//errs()<<"Global Variable name : "<<globalVar->getName()<<"\n";
 		if(globalVar->hasInitializer()) {
 			if(globalVar->hasName() && globalVar->getName().equals("__clapDummyGlobalVar")) {
@@ -112,6 +117,10 @@ void DaikonPass::populateGlobals(Module &module) {
 			}
 			//string type1 = getTypeString(globalVar->getInitializer()->getType());
 			//string type2 = getTypeString(globalVar->getType());
+                        errs() << "[DEBUG] Inserting global: " << *globalVar << '\n';
+                        errs() << "\tType: << " << *(globalVar->getType()) << '\n';
+                        errs() << "\tTypeString: " << getTypeString(globalVar->getType()) << '\n';
+                        assert(!(getTypeString(globalVar->getType()) == STRUCT_TYPE));
 			globalList.push_back(globalVar);
 		}
 
@@ -120,7 +129,7 @@ void DaikonPass::populateGlobals(Module &module) {
 
 
 bool DaikonPass::isGlobal(Value *value) {
-	for(vector<Value*>::iterator itr = globalList.begin(); itr != globalList.end() ; ++itr) {
+	for(vector<GlobalVariable*>::iterator itr = globalList.begin(); itr != globalList.end() ; ++itr) {
 		Value *v = *itr;
 		if(value == v) { 
 			return true;
@@ -224,8 +233,6 @@ string DaikonPass::getTypeString(Type *type) {
   }
   else if (tid == Type::PointerTyID) {
     PointerType *ptrType = static_cast<PointerType*>(type);
-    errs() << "[DEBUG] pointer type: " << *ptrType << '\n';
-    errs() << "[DEBUG] pointer element type: " << *(ptrType->getElementType()) << '\n';
     return POINTER_TYPE;
   }
   else if (tid == Type::VoidTyID) {
@@ -251,12 +258,13 @@ bool DaikonPass::isSupportedType(Type *type) {
 		case Type::IntegerTyID:
 		case Type::FloatTyID:
 		case Type::DoubleTyID:  
-		case Type::StructTyID: 
 		case Type::ArrayTyID: 
 		case Type::PointerTyID:
 			// case Type::VectorTyID: 
 			return true;
 
+		case Type::StructTyID: 
+                        return false;
 		default:
 			return false;
 	}
@@ -328,13 +336,29 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 	//We don't have to check the type of global value because
 	//We are inserting only integer global parameters
 	//So they will always be int.
-	for(vector<Value*>::iterator globalItr = globalList.begin(); globalItr != globalList.end() ; ++globalItr) {
+	for(vector<GlobalVariable*>::iterator globalItr = globalList.begin(); globalItr != globalList.end() ; ++globalItr) {
 		Value *val = *globalItr;
-		GlobalVariable *gVal = static_cast<GlobalVariable*>(val);
+		//GlobalVariable *gVal = static_cast<GlobalVariable*>(val);
+                GlobalVariable *gVal = *globalItr;
 		string valNameStr = "::"+val->getName().str();
                 Value *valName = getValueForString(StringRef(valNameStr.c_str()),module);
-		string globalTypeString = getTypeString(getGlobalType(gVal->getType()));
+		string globalTypeString = getTypeString(gVal->getType());
 		Value *type;
+                errs() << "[DEBUG] global type: " << *(gVal->getType()) << '\n';
+                if (globalTypeString == STRUCT_TYPE) {
+                  errs() << "[WARNING] hookatFunctionStart(): struct type not supported\n";
+                  continue;
+                }
+                else {
+                      errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
+                      type=getValueForString(StringRef(
+                                              getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
+                      assert(type != NULL && "NULL type in hookAtFunctionStart()");
+                      errs() << "[DEBUG] hookAtFunctionStart(): valueName: " << *valName << '\n';
+                      argList.push_back(valName);
+                      argList.push_back(type);
+                      argList.push_back(gVal);
+                }
                 // markus: for now, simply label pointers types as "pointer"
                 // (treat them as numerical values) and do the same for arrays.
                 // In DaikonPass.h, both ARRAY_TYPE and POINTER_TYPE are
@@ -379,21 +403,6 @@ void DaikonPass::hookAtFunctionStart(Function *func) {
 		//}
 		//else
 		//{
-                if (globalTypeString == STRUCT_TYPE) {
-                  errs() << "[WARNING] hookatFunctionStart(): struct type not supported\n";
-                  continue;
-                }
-                else {
-                      errs()<<"Name of the global variable "<<gVal->getName() <<" "<<globalTypeString<<"\n";
-                      type=getValueForString(StringRef(
-                                              getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
-
-                      argList.push_back(valName);
-                      argList.push_back(type);
-                      argList.push_back(gVal);
-                }
-
-
 	}
 
 
@@ -537,13 +546,14 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
 	//First Send the global values
 	//Please see the documentation in the hookAtFunctionStart
 	//Methods. Detail information is available there.
-	for(vector<Value*>::iterator globalItr = globalList.begin(); globalItr != globalList.end() ; ++globalItr) {
+	for(vector<GlobalVariable*>::iterator globalItr = globalList.begin(); globalItr != globalList.end() ; ++globalItr) {
 		Value *val = *globalItr;
-		GlobalVariable *gVal = static_cast<GlobalVariable*>(val);
+		//GlobalVariable *gVal = static_cast<GlobalVariable*>(val);
+		GlobalVariable *gVal = *globalItr;
 		string valNameStr = "::"+val->getName().str();
                 Value *valName = getValueForString(StringRef(valNameStr.c_str()),module);
 
-		string globalTypeString = getTypeString(getGlobalType(gVal->getType()));
+		string globalTypeString = getTypeString(gVal->getType());
 		Value *type;
                 // markus: for now, handle pointers as "pointer" type (numerical values).
 		//Handle the pointer types differently
@@ -561,17 +571,18 @@ void DaikonPass::hookAtFunctionEnd(Function *func) {
                         //type = getValueForString(StringRef(
                                   //getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
 		//}
-                if (globalTypeString == STRUCT_TYPE) {
-                  errs() << "[WARNING] hookAtFunctionEnd(): Struct types not handled\n";
-                  // TODO: is it OK to just continue  here? Is the IR malformed?
-                  continue;
-                }
-                else {
+                //if (globalTypeString == STRUCT_TYPE) {
+                //  errs() << "[WARNING] hookAtFunctionEnd(): Struct types not handled\n";
+                //  // TODO: is it OK to just continue  here? Is the IR malformed?
+                //  continue;
+                //}
+                //else {
                   errs()<<"Name of the global variable from end non pointer "<<gVal->getName() <<" "<<globalTypeString<<"\n";
                   type = getValueForString(StringRef(
                             getTypeString(gVal->getInitializer()->getType()).c_str()).trim(),module);
-                }
+                //}
 
+                errs() << "[DEBUG] hookAtFunctionEnd() valueName: " << *valName << '\n';
 		argList.push_back(valName);
 		argList.push_back(type);
 		argList.push_back(gVal);
@@ -1101,8 +1112,9 @@ void DaikonPass::dumpDeclFileAtEntryAndExit(Function *func,string EntryOrExit, f
 			}
 			errs()<<"Size of the global variable list: " << globalList.size() <<"\n";
 			//Process the Global values
-			for(vector<Value*>::iterator globalItr = globalList.begin(); globalItr != globalList.end(); ++globalItr) {				
-				GlobalVariable *v = static_cast<GlobalVariable*>(*globalItr);
+			for(vector<GlobalVariable*>::iterator globalItr = globalList.begin(); globalItr != globalList.end(); ++globalItr) {				
+				//GlobalVariable *v = static_cast<GlobalVariable*>(*globalItr);
+				GlobalVariable *v = *globalItr;
 				Value *globalValue = v->getInitializer();
 				if( globalValue  && !isSupportedType(globalValue)) {
 					continue;
