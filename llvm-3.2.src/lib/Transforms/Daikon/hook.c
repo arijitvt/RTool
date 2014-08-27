@@ -632,23 +632,27 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
 
 }
 static void dump_scalar_data_types(FILE *fp,void *data,char *varName,char *varType) {
-  fputs(varName,fp);
-  fputs("\n",fp);
+  //fputs(varName,fp);
+  //fputs("\n",fp);
+  fprintf(fp, "%s\n", varName);
   //sprintf(buffer,"%d",*data);
 
-  if(strcmp(varType,"int") ==0 )
+  fprintf(stderr, "[DEBUG] %s() varType: %s\n", __FUNCTION__, varType);
+  fprintf(stderr, "[DEBUG] %s() varName: %s\n", __FUNCTION__, varName);
+  if(strcmp(varType,"int") == 0 )
   {
-    fprintf(fp,"%d",(int)data);
+    fprintf(stderr, "[DEBUG] scalar int value: %d\n", (int) data);
+    fprintf(fp,"%d",(int) data);
   }
-  else if(strcmp(varType,"char") ==0 )
+  else if(strcmp(varType,"char") == 0 )
   {
     fprintf(fp, "%u", (char)data);
   }
-  else if(strcmp(varType,"short") ==0 )
+  else if(strcmp(varType,"short") == 0 )
   {
     fprintf(fp,"%d",(int)data);
   }
-  else if(strcmp(varType,"long") ==0 )
+  else if(strcmp(varType,"long") == 0 )
   {
     fprintf(fp,"%ld",(long)data);
   }	
@@ -664,8 +668,9 @@ static void dump_scalar_data_types(FILE *fp,void *data,char *varName,char *varTy
     fprintf(stderr, "[WARNING] dump_scalar_data_types(): unhandled type: %s\n", varType);
     return;
   }
-  fputs("\n",fp);
-  fputs("1\n",fp);
+  //fputs("\n",fp);
+  //fputs("1\n",fp);
+  fprintf(fp, "\n1\n");
 }
 
 

@@ -108,6 +108,12 @@ void DaikonPass::populateGlobals(Module &module) {
                   errs() << "[WARNING] Unsupported global type: " << *globalVar << '\n';
                   continue;
                 }
+                // A global variable is marked constant if it cannot be
+                // modified at runtime. Not very useful invariant wise!
+                if (globalVar->isConstant()) {
+                  errs() << "[DEBUG] Constant global variable found, skipping\n";
+                  continue;
+                }
 		//errs()<<"Global Variable name : "<<globalVar->getName()<<"\n";
 		if(globalVar->hasInitializer()) {
 			if(globalVar->hasName() && globalVar->getName().equals("__clapDummyGlobalVar")) {

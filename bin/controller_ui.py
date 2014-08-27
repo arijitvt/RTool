@@ -164,6 +164,7 @@ def all_clean():
         os.system("rm -rf arijit/");
         os.system("rm -rf tr_gen/");
         os.system("rm -rf rtool_res*");
+        os.system("rm -rf daik_res");
         os.system("rm -f hook.c")
         os.system("rm -f hook.h")
         os.system("rm -f program.dtrace")
