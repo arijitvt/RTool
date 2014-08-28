@@ -19,6 +19,7 @@ DaikonPass::DaikonPass():ModulePass(ID) {
 	doNotInstrumentFunctions.push_back("clap_chcHook");
 	doNotInstrumentFunctions.push_back("clap_chcHookDynamic");
 
+        doNotInstGlobals.insert("llvm.global_ctors");
 }
 
 
@@ -114,6 +115,11 @@ void DaikonPass::populateGlobals(Module &module) {
                   errs() << "[DEBUG] Constant global variable found, skipping\n";
                   continue;
                 }
+                // check if the global is on the whitelist (see ctor)
+                if (doNotInstGlobals.find(globalVar->getName()) != doNotInstGlobals.end()) {
+                  errs() << "[DEBUG] doNotInstGlobal(): " << globalVar->getName() << '\n';
+                  continue;
+                }
 		//errs()<<"Global Variable name : "<<globalVar->getName()<<"\n";
 		if(globalVar->hasInitializer()) {
 			if(globalVar->hasName() && globalVar->getName().equals("__clapDummyGlobalVar")) {
@@ -124,6 +130,7 @@ void DaikonPass::populateGlobals(Module &module) {
 			//string type1 = getTypeString(globalVar->getInitializer()->getType());
 			//string type2 = getTypeString(globalVar->getType());
                         errs() << "[DEBUG] Inserting global: " << *globalVar << '\n';
+                        errs() << "getName(): " << globalVar->getName() << '\n';
                         errs() << "\tType: << " << *(globalVar->getType()) << '\n';
                         errs() << "\tTypeString: " << getTypeString(globalVar->getType()) << '\n';
                         assert(!(getTypeString(globalVar->getType()) == STRUCT_TYPE));

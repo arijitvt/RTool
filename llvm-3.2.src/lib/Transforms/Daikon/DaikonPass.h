@@ -125,6 +125,7 @@ class DaikonPass:public ModulePass {
 		vector<GlobalVariable*>  globalList;
 		vector<string> 	doNotInstrumentFunctions;
 		vector<string> programPoints;
+                set<string> doNotInstGlobals;
 		Type *voidType ;
 		IntegerType *int8Type ; 	
 		IntegerType *int16Type;
