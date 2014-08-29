@@ -87,7 +87,7 @@ public class FileIO {
 			write_date_to_file(declContainerFileName, false, declData);
 			declData.clear();
 
-                        // loop over the input file until we reach the ine
+                        // loop over the input file until we reach the line
                         // which starts with input-language
                         for (;;) {
 				line = lineNumberReader.readLine();
@@ -132,64 +132,77 @@ public class FileIO {
 	 * @throws IOException
 	 */
 	public void read_dtrace_file() throws FileFormatException, IOException {
-		try {
-                        System.err.println("[DEBUG] reading decl file: " + fileName);
-			fileReader = new FileReader(fileName);
-			lineNumberReader = new DaikonLineNumberReader(fileReader);
-			String line = lineNumberReader.readLine();
-			// Skip the decl part
-			do {
-				line = lineNumberReader.readLine();
-			} while (line != null && !line.startsWith("input-language"));
+	  try {
+            System.err.println("[DEBUG] reading dtrace file: " + fileName);
+            fileReader = new FileReader(fileName);
+            lineNumberReader = new DaikonLineNumberReader(fileReader);
+            String line = lineNumberReader.readLine();
+            // Skip the decl part
+            do {
+                    line = lineNumberReader.readLine();
+            } while (line != null && !line.startsWith("input-language"));
 
-			Reader: while (lineNumberReader.ready()) {
-				// Now We will Skip few More locations to get actual reading
-				// place
-				while (!line.trim().equals("") && lineNumberReader.ready()) {
-					line = lineNumberReader.readLine();
-				}
+            while (lineNumberReader.ready()) {
+              // skip leading whitespace
+              while (!line.trim().equals("") && lineNumberReader.ready()) {
+                line = lineNumberReader.readLine();
+              }
 
-				List<String> data = new ArrayList<String>();
-				while (!line.startsWith("input-language")
-						&& lineNumberReader.ready()) {
-					line = lineNumberReader.readLine();
-					if (line.contains("Bogus_Trace")) {
-						data.clear();
-						line  = skipToNextSection(lineNumberReader);
-					}
-					if (!line.startsWith("input-language")) {
-						data.add(line);
-					}
-				}
-				if(flag) {
-					flag = false;
-					continue;
-				}
-				// Now Our Data Has the entire trace for one single run
-//				displayList(data);
-				List<String> threadBlockTrace = new ArrayList<String>();
-				for (int i = 0; i < data.size(); ++i) {
-					while (i < data.size() && !data.get(i).trim().equals("")) {
-						threadBlockTrace.add(data.get(i));
-						++i;
-					}
-					processThreadBlockTrace(threadBlockTrace);
-					threadBlockTrace.clear();
-				}
-			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (CloneNotSupportedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			lineNumberReader.close();
-			fileReader.close();
-		}
+              List<String> data = new ArrayList<String>();
+              // Read the data for an entire run
+              while (!line.startsWith("input-language")
+                  && lineNumberReader.ready()) {
+                line = lineNumberReader.readLine();
+                if (line.contains("Bogus_Trace")) {
+                  System.err.println("[ERROR] Bogus_Trace encountered");
+                  System.exit(1);
+                  data.clear();
+                  line  = skipToNextSection(lineNumberReader);
+                }
+                if (!line.startsWith("input-language")) {
+                  data.add(line);
+                }
+              }
+              if(flag) {
+                flag = false;
+                continue;
+              }
+              // Now Our Data Has the entire trace for one single run
+              // displayList(data);
+              List<String> threadBlockTrace = new ArrayList<String>();
+              for (int i = 0; i < data.size(); ++i) {
+                while (i < data.size() && !data.get(i).trim().equals("")) {
+                  threadBlockTrace.add(data.get(i));
+                  ++i;
+                }
+                if (threadBlockTrace.size() == 0) {
+                  //System.err.println("[WARNING] threadBlockTrace of size 0");
+                  continue;
+                }
+                processThreadBlockTrace(threadBlockTrace);
+                threadBlockTrace.clear();
+              } // for (int i = 0
+            } // while (lineNumerReader.read())
+          } // try 
+          catch (FileNotFoundException e) {
+              System.err.println("Error: " + fileName + " not found: " + e.getMessage());
+              e.printStackTrace();
+              System.exit(1);
+          } 
+          catch (IOException e) {
+              System.err.println("Error: unable to write to file: " + e.getMessage());
+              e.printStackTrace();
+              System.exit(1);
+          } 
+          catch (CloneNotSupportedException e) {
+              System.err.println("Error: unable to clone: " + e.getMessage());
+              e.printStackTrace();
+              System.exit(1);
+          } 
+          finally {
+              lineNumberReader.close();
+              fileReader.close();
+          }
 	}
 
 	/**
@@ -199,7 +212,6 @@ public class FileIO {
 	 */
 	private void processThreadBlockTrace(List<String> threadBlockTrace)
 			throws IOException {
-		// TODO Auto-generated method stub
 		String threadID = threadBlockTrace.get(0).split("::::")[1];
 		String outputFileName = threadID + ".dtrace";
 		threadBlockTrace.remove(0);

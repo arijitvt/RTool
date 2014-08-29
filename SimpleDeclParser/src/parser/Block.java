@@ -8,7 +8,8 @@ public class Block {
 	private int blockId;
 	private String threadId;
 	private String  functionName;
-	private boolean EntryOrExit;//True for entry False for exit
+        // Set to false for an EXIT function. Otherwise, set to true
+	private boolean EntryOrExit; //True for entry False for exit
 	private String invocationType;
 	private int callStackCounter;
 
@@ -48,6 +49,7 @@ public class Block {
                   System.exit(1);
                 }
 		this.threadId = blockInfo.get(0);
+                System.err.println("[DEBUG] processBlockInformation(): threadId: " + threadId);
 		
 		//Second line must have the funtion name
 		assert(blockInfo.get(1).startsWith(".."));
@@ -83,6 +85,8 @@ public class Block {
 			}
 			result+="\n";
 		}
+                // remove the extra newline from the last iteration
+                result = result.substring(0, result.length()-1);
 		return result;
 	}
 
