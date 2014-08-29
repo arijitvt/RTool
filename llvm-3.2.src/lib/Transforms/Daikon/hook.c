@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+
 #define TRUE 1
 #define FALSE 0
 
@@ -146,22 +147,16 @@ void clap_hookFuncBegin(int varCount, ...) {
         fputs("\n",fp);
         fputs("this_invocation_nonce",fp);
         fputs("\n",fp);
-        memset(buffer,'\0',SMALL);
-        assert(sizeof(callStackCounbter < SMALL));
-        fprintf(stderr, "[DEBUG] callStackCounbter: %d\n", callStackCounbter);
-        sprintf(buffer,"%d",callStackCounbter);
-        fputs(buffer,fp);
+        //memset(buffer,'\0',SMALL);
+        //assert(sizeof(callStackCounbter < SMALL));
+        //sprintf(buffer,"%d",callStackCounbter);
+        //fputs(buffer,fp);
+        fprintf(fp, "%d", callStackCounbter);
         fputs("\n",fp);
         int i ;
         for (i = 0; i < varCount; ++i) {
                 char *varName = va_arg(vararg,char*);
                 char *varType = va_arg(vararg,char*);
-                fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %p\n", varName);
-                assert(varName && "varName is NULL");
-                fprintf(stderr, "[DEBUG] hookFuncBegin(): *varName: %s\n", varName);
-                fprintf(stderr, "[DEBUG] hookFuncBegin(): varType: %p\n", varType);
-                assert(varType && "varType is NULL");
-                fprintf(stderr, "[DEBUG] hookFuncBegin(): *varType: %s\n", varType);
 
                 // handle globals
                 if(varName[0] == ':') {
@@ -188,8 +183,6 @@ void clap_hookFuncBegin(int varCount, ...) {
                                 dump_pointer_data_types(fp, data, varName, varType);
                         }
                         else {
-                                fprintf(stderr, "[DEBUG] hookFuncBegin(): handling basic data type\n");
-                                fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %s\n", varName);
                                 dump_basic_data_types(fp,data,varName,varType);
                         }
                 }
@@ -198,7 +191,6 @@ void clap_hookFuncBegin(int varCount, ...) {
                 // be more unique to avoid colisions.
                 else if (strncmp(varName, "return", sizeof("return")) == 0)  {
                   // handle the return value of the function
-                  fprintf(stderr, "[DEBUG] hookFuncBegin(): handling return\n");
                   void *data = va_arg(vararg,void*);
                   dump_scalar_data_types(fp,data,varName,varType);
                 }
@@ -227,14 +219,10 @@ void clap_hookFuncBegin(int varCount, ...) {
                             dump_scalar_data_types(fp, data, varName, varType);
                     }
                     else {
-                            fprintf(stderr, "[DEBUG] hookFuncBegin(): handling scalar data type\n");
-                            fprintf(stderr, "[DEBUG] hookFuncBegin(): varName: %s\n", varName);
                             dump_scalar_data_types(fp,data,varName,varType);
                     }
                 }
-                fprintf(stderr, "[DEBUG] hookFunctionBegin(): finished processing arg: %s\n", varName);
       } // for (i = 0; i < varCount; ++i)
-    fprintf(stderr, "[DEBUG] hookFuncBegin(): finished processing arguments\n");
     // Since we've handled all the variables we need to trace simply append
     // a new line, close the file, and unlock the mutex
     fputs("\n",fp);
@@ -260,23 +248,19 @@ void clap_hookFuncEnd(int varCount, ...) {
         va_list vararg;
         va_start(vararg,varCount);
         char *funcName = va_arg(vararg,char*);
-        printf("\n\nExiting from Function Name : %s\n",funcName);
         fputs(funcName,fp);
         fputs("\n",fp);
         fputs("this_invocation_nonce",fp);
         fputs("\n",fp);
-        memset(buffer,'\0',SMALL);
-        printf("[DEBUG] callStackCounbter: %d\n", callStackCounbter);
-        sprintf(buffer,"%d",callStackCounbter);
-        fputs(buffer,fp);
+        //memset(buffer,'\0',SMALL);
+        //sprintf(buffer,"%d",callStackCounbter);
+        //fputs(buffer,fp);
+        fprintf(fp, "%d", callStackCounbter);
         fputs("\n",fp);
         int i ;
-        printf("Var count is %d\n",varCount);
         for( i = 0 ; i < varCount ;++i) {
                 char *varName = va_arg(vararg,char*);
                 char *varType = va_arg(vararg,char*);
-                fprintf(stderr, "[DEBUG] hookFuncEnd(): varName: %s\n", varName);
-                fprintf(stderr, "[DEBUG] hookFuncEnd(): varType: %s\n", varType);
                 // handle globals
                 if(varName[0] == ':') {
                         void *data = va_arg(vararg,void*);
@@ -302,8 +286,6 @@ void clap_hookFuncEnd(int varCount, ...) {
                                 dump_pointer_data_types(fp, data, varName, varType);
                         }
                         else {
-                                fprintf(stderr, "[DEBUG] hookFuncEnd(): handling basic data type\n");
-                                fprintf(stderr, "[DEBUG] hookFuncEnd(): varName(): %s\n", varName);
                                 dump_basic_data_types(fp,data,varName,varType);
                         }
                 }
@@ -312,7 +294,6 @@ void clap_hookFuncEnd(int varCount, ...) {
                 // be more unique to avoid colisions.
                 else if (strncmp(varName, "return", sizeof("return")) == 0)  {
                   // handle the return value of the function
-                  fprintf(stderr, "[DEBUG] hookFuncEnd(): handling return\n");
                   void *data = va_arg(vararg,void*);
                   dump_scalar_data_types(fp,data,varName,varType);
                 }
@@ -340,8 +321,6 @@ void clap_hookFuncEnd(int varCount, ...) {
                             dump_scalar_data_types(fp, data, varName, varType);
                     }
                     else {
-                            fprintf(stderr, "[DEBUG] hookFuncEnd(): handling scalar data type\n");
-                            fprintf(stderr, "[DEBUG] hookFuncEnd(): varName(): %s\n", varName);
                             dump_scalar_data_types(fp,data,varName,varType);
                     }
                 }
@@ -355,6 +334,7 @@ void clap_hookFuncEnd(int varCount, ...) {
 	//pthread_mutex_unlock(&lock);
 }
 
+#if 0
 void clap_chcHook(int varCount, ...) {
 	std_lock();
 	//pthread_mutex_lock(&lock);
@@ -368,7 +348,6 @@ void clap_chcHook(int varCount, ...) {
 	char *funcName = va_arg(vararg,char*);
 	pthread_t thrd = pthread_self();
 	int threadId = getThreadId(&thrd);
- //       printf("Yoyo Entry or Exit : %d : Name : %s : Type : %s : value %d from function : %s : thread id  : %d\n",entryOrExit,varName,type,*value,funcName,threadId);
 
 	if(fp != NULL) {
                 char buffer[BIGSIZE];
@@ -429,9 +408,11 @@ void clap_chcHook(int varCount, ...) {
 	//pthread_mutex_unlock(&lock);
 	
 }
+#endif
 
 
 
+#if 0
 void clap_chcHookDynamic(int varCount, ...) {
 	std_lock();
 	FILE *fp = fopen(fileName,"a");
@@ -510,6 +491,7 @@ void clap_chcHookDynamic(int varCount, ...) {
 	std_unlock();
 	
 }
+#endif
 
 void do_nothing() {
 	/**
@@ -590,8 +572,6 @@ static void dump_basic_data_types(FILE *fp,void *data,char *varName,char *varTyp
 	}
 
 
-	printf("Variable type coming is %s\t for %s\n",varType,varName);
-
 	if(strcmp(varType,"int") ==0 )
 	{
           if (data != NULL) {
@@ -637,11 +617,8 @@ static void dump_scalar_data_types(FILE *fp,void *data,char *varName,char *varTy
   fprintf(fp, "%s\n", varName);
   //sprintf(buffer,"%d",*data);
 
-  fprintf(stderr, "[DEBUG] %s() varType: %s\n", __FUNCTION__, varType);
-  fprintf(stderr, "[DEBUG] %s() varName: %s\n", __FUNCTION__, varName);
   if(strcmp(varType,"int") == 0 )
   {
-    fprintf(stderr, "[DEBUG] scalar int value: %d\n", (int) data);
     fprintf(fp,"%d",(int) data);
   }
   else if(strcmp(varType,"char") == 0 )
@@ -693,8 +670,6 @@ static void dump_pointer_data_types(FILE *fp,void *data,char *varName,char *varT
 	// We will double check that this 
 	// function is handling the pointer type
 	assert(strstr(varType,"*") != NULL || strstr(varType, "pointer") != NULL);
-        fprintf(stderr, "[DEBUG] dump_pointer_data_types(): data : %lu\n", (uintptr_t) data);
-        fprintf(stderr, "[DEBUG] dump_pointer_data_types(): *data : %lu\n", *((unsigned long *) data));
 	
         // Pointer data is same for all the data types. Simply use the address of the pointer.
         if (data != NULL) {
