@@ -25,15 +25,22 @@ def do_instrumentation_sp(sp_val) :
 	os.system(command_string);
 	return;
 
-def runner(choice,count,argument) :                               
+def runner(choice,count) :                               
         command_string = "";
 	choice = int(choice);
      	print "The choice is  coming as :"+str(choice);   
+
+        """ If the file args exists then use it as the arguments """
+        argument = ""
+        if os.path.isfile("./args") :
+            with open ("./args", "r") as args :
+                argument += args.read()
+
         if choice is 0 :
-        	command_string = "inspect  ./a.out "+argument;
+        	command_string = "inspect  ./a.out " + argument;
         
         elif choice is 1:
-            command_string = "inspect --max-pcb "+str(count)+" ./a.out  "+argument ;
+            command_string = "inspect --max-pcb "+str(count)+" ./a.out "+argument ;
 
         elif choice is 2:                                               
             command_string= "inspect --max-pset "+str(count)+"  ./a.out "+argument;
@@ -128,8 +135,7 @@ def main_controller() :
 		do_instrumentation();
 		alg_choice= sys.argv[2];
 		alg_count=sys.argv[3];
-		arg=" ";
-		runner(alg_choice,alg_count,arg);
+		runner(alg_choice,alg_count);
 		only_parser();
 
 #	elif sys.argv[1] == "load_sp":
@@ -152,9 +158,8 @@ def main_controller() :
 			sp_val = sys.argv[2];
 			alg_choice=sys.argv[3];
 			alg_count=sys.argv[4];
-			arg=" ";
 			do_instrumentation_sp(sp_val);
-			runner(alg_choice,alg_count,arg);
+			runner(alg_choice,alg_count);
 			only_parser();
 #
 #	elif sys.argv[1] == "run_sp":

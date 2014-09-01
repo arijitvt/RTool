@@ -9,7 +9,7 @@ daikon_path=os.environ.get('daikon');
 #Original Diakon Run Script Starts
 
 def compile():
-	command_string = "gcc -gdwarf-2 -o output *.c -pthread ";
+	command_string = "gcc -std=gnu99 -gdwarf-2 -o output *.c -pthread ";
 	os.system(command_string);                   
 	return;
 
@@ -24,6 +24,12 @@ def run_executable():
 	flagPptExists  = False;
 	
         argument = ""
+
+        """ If the file args exists then use it as the arguments """
+        argument = ""
+        if os.path.isfile("./args") :
+            with open ("./args", "r") as args :
+                argument += args.read()
 
 	for file in os.listdir("."):
 		if ".vars" in file :
@@ -50,17 +56,25 @@ def run_executable():
 	return;
 
 def dtrace_manip_for_daikon(counter):
-	command_string = "cp -r daikon-output/*.dtrace arijit/"
-	os.system(command_string);
-	os.chdir("arijit");
-	for file in os.listdir("."):
-		if not "_" in file: 
-			file_names = file.split(".");
-			assert len(file_names) == 2;
-			final_name =  file_names[0]+"_"+str(counter)+"."+file_names[1];
-			os.rename(file,final_name)
-	os.chdir("../");
-	return 
+        """ The daikon output file is called output.dtrace in the directory daikon-output"""
+        output_dir = "daikon-output"
+        output_file = "output.dtrace"
+        """ Move the daikon dtrace file to arijit/output_#.dtrace where # is the current run count"""
+	command_string = "mv " + output_dir + "/" + output_file + " arijit/output_" + str(counter) + ".dtrace"
+	ret = os.system(command_string);
+        if ret != 0:
+            print "Error running command: " + command_string
+            sys.exit(1)
+
+	#os.chdir("arijit");
+	#for file in os.listdir("."):
+	#	if not "_" in file: 
+	#		file_names = file.split(".");
+	#		assert len(file_names) == 2;
+	#		final_name =  file_names[0]+"_"+str(counter)+"."+file_names[1];
+	#		os.rename(file,final_name)
+	#os.chdir("../");
+	#return 
 
 def run_daikon():
 	command_string = "java daikon.Daikon daikon-output/output.dtrace"
@@ -98,8 +112,12 @@ def main_daikon() :
 
 	elif sys.argv[2] == "rep" :
 		compile();
-		run_executable();
-		dtrace_manip_for_daikon(sys.argv[3]);
+                """ Lets just assume argv[3] exists...."""
+                num_runs = int(sys.argv[3])
+                """ Repeatedly run the executable and save the results in separate dtrace files """
+                for i in range(0, num_runs):
+                    run_executable();
+                    dtrace_manip_for_daikon(i);
 	else :
 		usage_for_daikon();
 	return;                                             

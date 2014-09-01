@@ -45,6 +45,9 @@ gcc_tool 	= "gcc";
 #link flags 
 link_flags = " -linspect -lpthread -lrt -lm -lstdc++ ";
 
+# compiler flags
+comp_flags = " -std=gnu99 "
+
 #add all compile time flags here
 clang_generic_flag = "-S -emit-llvm -g";   
 
@@ -128,7 +131,7 @@ def gcc_compilation(filename):
 	output_filename = "a.out"
 	command_string  = gcc_tool+blank+" -L"+inspect_lib_path+blank+\
 				" -o "+output_filename+blank+\
-					filename+blank+ld_lib_flag+link_flags;
+					filename+blank+ld_lib_flag + comp_flags + link_flags;
 	os.system(command_string);
 	return output_filename;
 
@@ -165,9 +168,10 @@ def compile_all_files(src,sp):
 	return temp_file_list;
 
 def cleanup(temp_file_list) :
-	for file in temp_file_list:
-		print "Deleting "+file
-		os.system("rm -rf "+file);
+        print "r_tool_ui.py: cleanup(): cleanup is disabled"
+	#for file in temp_file_list:
+	#	print "Deleting "+file
+	#	os.system("rm -rf "+file);
 
 
 def gen_program_point_for_file(filename):
