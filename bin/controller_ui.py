@@ -184,6 +184,7 @@ def all_clean():
         os.system("rm -rf rtool_res*");
         os.system("rm -rf daik_res");
         os.system("rm -f hook.c")
+        os.system("rm -f ProgramPoints.ppts")
         os.system("rm -f hook.h")
         os.system("rm -f program.dtrace")
         os.system("rm -f output.decl")
