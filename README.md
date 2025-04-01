@@ -1,11 +1,11 @@
-#Details of the installation process.
+# Details of the installation process.
 =========================================
 RTool is a dynamic invariant generation tool for sequential and concurrent C/C++ programs.
 It builds upon the LLVM compiler front-end (llvm-3.2), the INSPECT concurrency testing
 tool (inspect-0.3), a Java based trace classifier (SimpleDeclParser) and the 
 Daikon dynamic invariant generation tool (daikon).
 
-#Installation Process
+# Installation Process
 ------------------------------------------
 The installation process consits of the following steps.
   1. Checkout the RTool git repository.
@@ -58,7 +58,7 @@ During the installation process, we have already updated various path variables.
 Once that is done, update the `PATH` variable with the `RTool/bin` and update the `daikon` variable with the source folder where the DaikonPass resides. DaikonPass folder exists in the `llvm-3.2.src/lib/Transforms/Daikon` folder. This folder should contain the `hook.h` and `hook.c` files, which contains the source for the *hook_assert* macro that we have defined.
 
 
-#How to use RTool
+# How to use RTool
 ===========================
 RTool can be used in three modes.
 
@@ -68,7 +68,7 @@ RTool can be used in three modes.
 
 Before using RTool, check if you can have access to the three scripts: `controller.py`,`runner.py` and `r_tool.py`. If it is not possible to access these scripts, then update the path variable properly in the RTool/exports.sh and check again.
 
-##1.  RTool for Daikon as is
+## 1.  RTool for Daikon as is
 --------------------------------
 RTool can be used to run Daikon as is, in a more comprehensive way and using much shorter commands. To compile the target program (the program for which you want to generate invariants) and dump the program points, run the command 
 
@@ -88,7 +88,7 @@ That is the main reason why we need to supply this iteration count.  This proces
 
 `java daikon.Daikon *.dtrace`
 
-##2. RTool's Invariant Generation
+## 2. RTool's Invariant Generation
 The main usage of the RTool is to generate invariants for not only sequential C/C++ programs, but also concurrent C/C++ programs. For this purpose, we should invoke RTool in a similar fashion as discussed in the previous section. However, we also need to run the target program under the supervision of the Inspect systematic concurrency testing tool. 
 
 To compile the program for Inspect and at the same time generate program points, use the below mentioned command.
